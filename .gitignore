@@ -32,6 +32,9 @@ desktop.ini
 *.log
 npm-debug.log*
 
+# Generated / large scrape data (run match_covers.py locally to regenerate)
+games-cache.json
+
 # Environment / secrets
 .env
 .env.local

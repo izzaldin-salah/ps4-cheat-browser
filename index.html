@@ -580,7 +580,8 @@
 
 <script>
   'use strict';
-  let allGames = [];
+  let allGames    = [];
+  let cusaCovers  = {};   // CUSA ID → cover URL from cusa_covers.json
   let supabaseClient = null;
   let favorites = new Set(JSON.parse(localStorage.getItem('ps4_favs') || '[]'));
   let currentTab = 'all';
@@ -647,6 +648,8 @@
         if (!rows.length) throw new Error('Database is empty — run populate_supabase.py first');
 
         allGames = rows.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        // Load cover map in parallel with showing the layout
+        fetch('/cusa_covers.json').then(r => r.ok ? r.json() : {}).then(d => { cusaCovers = d || {}; }).catch(() => {});
         fill.style.width = '100%';
         txt.textContent  = `✅ ${allGames.length} games loaded`;
         setTimeout(showMainLayout, 400);
@@ -668,6 +671,13 @@
     document.getElementById('searchWrap').style.display = 'flex';
     document.getElementById('tabAll').style.display = '';
     document.getElementById('tabFavs').style.display = '';
+    // Load cover map if not already loaded, then re-render so covers appear
+    if (Object.keys(cusaCovers).length === 0) {
+      fetch('/cusa_covers.json')
+        .then(r => r.ok ? r.json() : {})
+        .then(d => { cusaCovers = d || {}; renderResults(); })
+        .catch(() => {});
+    }
     renderResults();
   }
 
@@ -2216,7 +2226,7 @@
       const grp = map.get(key);
       grp.entries.push(g);
       if (!grp.coverUrl) {
-        const cv = (g.id && CUSTOM_COVERS[g.id]) ? CUSTOM_COVERS[g.id] : (g.coverUrl || null);
+        const cv = (g.id && (CUSTOM_COVERS[g.id] || cusaCovers[g.id])) ? (CUSTOM_COVERS[g.id] || cusaCovers[g.id]) : (g.coverUrl || null);
         if (cv) { grp.coverUrl = cv; grp.coverId = g.id; }
       }
     }
@@ -2276,6 +2286,9 @@
 
     // store groups for later reference by index
     window._groups = groups;
+
+    // Kick off lazy cover fetching for tiles without a cover
+    requestAnimationFrame(initCoverObserver);
   }
 
   // ─── COVER HELPERS ─────────────────────────────────────
@@ -2296,13 +2309,14 @@
   }
 
   function coverTileHtml(id, name, url) {
-    const imgUrl = (id && CUSTOM_COVERS[id]) || url || null;
+    const imgUrl = (id && (CUSTOM_COVERS[id] || cusaCovers[id])) || url || null;
     if (imgUrl) return `<img src="${escHtml(imgUrl)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='${safeGrad(id,name,42)}'">`;
-    return gradientCover(id, name, 42);
+    // No cover yet — render gradient placeholder with lazy-fetch marker
+    return `<div class="cover-lazy" data-name="${escHtml(name)}" data-id="${escHtml(id||'')}" style="width:100%;height:100%">${gradientCover(id, name, 42)}</div>`;
   }
 
   function coverDetailHtml(id, name, url) {
-    const imgUrl = (id && CUSTOM_COVERS[id]) || url || null;
+    const imgUrl = (id && (CUSTOM_COVERS[id] || cusaCovers[id])) || url || null;
     if (imgUrl) return `<img src="${escHtml(imgUrl)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='${safeGrad(id,name,60)}'">`;
     return gradientCover(id, name, 60);
   }
@@ -2449,6 +2463,45 @@
   }
 
   // ─── COVER APIS ────────────────────────────────────────
+  // ─── LAZY COVER OBSERVER ───────────────────────────────────
+  let _coverObserver = null;
+  const _coverCache  = new Map(); // name → url (session cache)
+
+  function initCoverObserver() {
+    // Disconnect any previous observer
+    if (_coverObserver) _coverObserver.disconnect();
+
+    if (!window.IntersectionObserver) {
+      // Fallback: fetch all immediately
+      document.querySelectorAll('.cover-lazy').forEach(fetchCoverForEl);
+      return;
+    }
+
+    _coverObserver = new IntersectionObserver((entries) => {
+      entries
+        .filter(e => e.isIntersecting)
+        .forEach(e => { _coverObserver.unobserve(e.target); fetchCoverForEl(e.target); });
+    }, { rootMargin: '300px' }); // pre-load 300px before tile is visible
+
+    document.querySelectorAll('.cover-lazy').forEach(el => _coverObserver.observe(el));
+  }
+
+  async function fetchCoverForEl(el) {
+    const name = el.dataset.name;
+    const id   = el.dataset.id;
+    if (!name || !el.isConnected) return;
+
+    let url = _coverCache.get(name.toLowerCase());
+    if (url === undefined) {
+      url = await fetchWikiCover(name);
+      _coverCache.set(name.toLowerCase(), url || null);
+    }
+
+    if (url && el.isConnected) {
+      el.outerHTML = `<img src="${escHtml(url)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'">`;
+    }
+  }
+
   async function fetchWikiCover(gameName) {
     if (!gameName) return null;
     try {
