@@ -585,19 +585,20 @@
   let currentTab = 'all';
   let currentGroup = null; // currently open group on detail page
 
-  const SUPABASE_URL    = 'https://bnljbsdbosnxsgvriosr.supabase.co';
-  const SUPABASE_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubGpic2Rib3NueHNndnJpb3NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NDA4NDQsImV4cCI6MjA4NzIxNjg0NH0.KBiswV89XDnjtWMOFk4VGhjcwapHEsLhdpX_2K60p7c';
+  // Set your Supabase credentials via localStorage or leave empty to use GitHub sync only
+  const SUPABASE_URL    = localStorage.getItem('supabaseUrl') || '';
+  const SUPABASE_KEY    = localStorage.getItem('supabaseKey') || '';
   const STORAGE_BUCKET  = 'ps4cheats';
   const STORAGE_FILE    = 'games.json';
   const CDN             = 'https://cdn.jsdelivr.net/gh/GoldHEN/GoldHEN_Cheat_Repository@main';
-  const RAWG_KEY        = '0dc623941f204f2882d26015d71efb12';
+  const RAWG_KEY        = localStorage.getItem('rawgKey') || ''; // Get a free key at rawg.io
   const RAWG_BASE       = 'https://api.rawg.io/api';
   const CUSTOM_COVERS   = { 'CUSA02290': 'https://images.pushsquare.com/83c6354db18f1/call-of-duty-black-ops-iii-cover.cover_large.jpg' };
 
   // ─── INIT ──────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
     try {
-      if (window.supabase) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      if (window.supabase && SUPABASE_URL && SUPABASE_KEY) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch(e) {}
     document.getElementById('searchInput').addEventListener('input', () => renderResults());
     document.getElementById('fileInput').addEventListener('change', e => handleLocalFiles(e.target.files));

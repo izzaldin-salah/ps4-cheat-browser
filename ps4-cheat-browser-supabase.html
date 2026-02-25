@@ -297,11 +297,11 @@
   let allGames = [];
   let supabase = null;
 
-  // Initialize Supabase
-  const SUPABASE_URL = localStorage.getItem('supabaseUrl') || 'https://bnljbsdbosnxsgvriosr.supabase.co';
-  const SUPABASE_KEY = localStorage.getItem('supabaseKey') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubGpic2Rib3NueHNndnJpb3NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NDA4NDQsImV4cCI6MjA4NzIxNjg0NH0.KBiswV89XDnjtWMOFk4VGhjcwapHEsLhdpX_2K60p7c';
+  // Initialize Supabase — enter your credentials via localStorage or the settings UI
+  const SUPABASE_URL = localStorage.getItem('supabaseUrl') || '';
+  const SUPABASE_KEY = localStorage.getItem('supabaseKey') || '';
   
-  if (SUPABASE_URL && SUPABASE_KEY && SUPABASE_URL !== 'https://bnljbsdbosnxsgvriosr.supabase.co') {
+  if (SUPABASE_URL && SUPABASE_KEY) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 

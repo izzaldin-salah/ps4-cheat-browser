@@ -21,6 +21,9 @@ desktop.ini
 .vscode/
 *.code-workspace
 
+# AI tools
+.claude/
+
 # Covers / Images (large assets - optionally exclude)
 # covers/
 # images/
@@ -28,3 +31,8 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
