@@ -18,7 +18,7 @@ The PS4 Cheat Browser solves a common pain point: the raw JSON cheat files from 
 
 ## Features
 
-### Core Browser (`ps4-cheat-browser.html`)
+### Core Browser (`index.html`)
 - **1,700+ Games** — Full coverage of the GoldHEN cheat repository across 1,702 JSON cheat files
 - **Instant Search** — Real-time filtering by game title or CUSA ID as you type
 - **Game Cover Art** — Automatically fetches official cover images from the PlayStation Store
@@ -30,11 +30,6 @@ The PS4 Cheat Browser solves a common pain point: the raw JSON cheat files from 
 - **Sync from GitHub** — One-click sync pulls the latest cheat data directly from the GoldHEN repository
 - **Local JSON Upload** — Load individual or bulk JSON cheat files directly from your file system via file picker
 - **Dark/Light UI** — Clean, modern interface built with CSS custom properties; glassmorphism nav bar; smooth animations
-
-### Supabase Integration (`ps4-cheat-browser-supabase.html` & `sync-to-supabase.html`)
-- **Cloud Database Sync** — Push the entire cheat collection to a Supabase PostgreSQL backend for shared, persistent storage
-- **Remote Data Fetching** — Load cheat data from the Supabase database instead of raw GitHub JSON, enabling server-side features
-- **Progress Tracking** — Visual progress bar during database sync operations
 
 ### Python Utilities
 | Script | Purpose |
@@ -51,9 +46,7 @@ The PS4 Cheat Browser solves a common pain point: the raw JSON cheat files from 
 
 ```
 ps4-cheat-browser/
-├── ps4-cheat-browser.html          # Main browser application (standalone)
-├── ps4-cheat-browser-supabase.html # Browser with Supabase cloud backend
-├── sync-to-supabase.html           # Utility to push cheat data to Supabase
+├── index.html                      # Main browser application (standalone)
 ├── cusa_id_map_output.js           # Auto-generated CUSA ID → game name mapping
 ├── all_cheats_list.txt             # Flat list of all cheat entries
 ├── games_list_for_covers.txt       # Game list for cover art scraping
@@ -80,7 +73,7 @@ ps4-cheat-browser/
 ### Usage
 
 1. **Clone or download** this repository
-2. **Open** `ps4-cheat-browser.html` in your browser
+2. **Open** `index.html` in your browser
 3. Click **"Sync from GitHub"** — this fetches the latest cheat list from the GoldHEN repository
 4. Browse, search, and explore over 1,700 PS4 games with their cheat codes
 
@@ -99,11 +92,12 @@ python generate_grouped_list.py
 
 ### Supabase Setup (Optional)
 
-To use the cloud-backed version:
-1. Create a [Supabase](https://supabase.com) project
-2. Open `sync-to-supabase.html` and enter your project URL and `anon` key
-3. Click **"Sync All Cheats"** to populate the database
-4. Use `ps4-cheat-browser-supabase.html` as your main browser, replacing the local JSON source with the Supabase API
+The browser supports loading cheat data from a Supabase backend. To enable it, set your credentials in the browser console once:
+
+```js
+localStorage.setItem('supabaseUrl', 'https://your-project.supabase.co');
+localStorage.setItem('supabaseKey', 'your-anon-key');
+```
 
 ---
 
