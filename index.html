@@ -531,20 +531,21 @@
   </div>
 </nav>
 
-<!-- SYNC / FIRST LOAD PANEL -->
+<!-- LOADING / FIRST LOAD PANEL -->
 <div id="syncPanel">
   <span class="panel-icon">🎮</span>
   <h2>PS4 Cheat Browser</h2>
-  <p>1700+ games from the GoldHEN Cheat Repository.<br>Sync once and browse offline.</p>
-  <div class="progress-wrap" id="autoProgress">
+  <p id="syncPanelSubtitle">Loading 1700+ games — please wait a moment…</p>
+  <div class="progress-wrap" id="autoProgress" style="display:block">
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="autoProgressFill"></div></div>
-    <div class="progress-text" id="autoProgressText">Loading...</div>
+    <div class="progress-text" id="autoProgressText">Starting…</div>
   </div>
-  <button class="sync-btn" id="syncBtnBig" onclick="syncFromGitHub()">
+  <!-- Only shown if auto-load fails -->
+  <button class="sync-btn" id="syncBtnBig" onclick="syncFromGitHub()" style="display:none;margin-top:24px">
     <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-    Sync from GitHub
+    Retry
   </button>
-  <div style="margin-top:14px;font-size:12px;color:var(--muted);font-family:monospace">
+  <div style="margin-top:14px;font-size:12px;color:var(--muted);font-family:monospace;display:none" id="forceCoversWrap">
     <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
       <input type="checkbox" id="forceCovers"> Refresh all covers
     </label>
@@ -585,20 +586,26 @@
   let currentTab = 'all';
   let currentGroup = null; // currently open group on detail page
 
-  // Set your Supabase credentials via localStorage or leave empty to use GitHub sync only
-  const SUPABASE_URL    = localStorage.getItem('supabaseUrl') || '';
-  const SUPABASE_KEY    = localStorage.getItem('supabaseKey') || '';
-  const STORAGE_BUCKET  = 'ps4cheats';
-  const STORAGE_FILE    = 'games.json';
-  const CDN             = 'https://cdn.jsdelivr.net/gh/GoldHEN/GoldHEN_Cheat_Repository@main';
-  const RAWG_KEY        = localStorage.getItem('rawgKey') || ''; // Get a free key at rawg.io
-  const RAWG_BASE       = 'https://api.rawg.io/api';
-  const CUSTOM_COVERS   = { 'CUSA02290': 'https://images.pushsquare.com/83c6354db18f1/call-of-duty-black-ops-iii-cover.cover_large.jpg' };
+  // ─── SUPABASE CONFIG ───────────────────────────────────
+  // Replace these with your own project values.
+  // ANON key is safe to be public — it is read-only thanks to RLS.
+  // SERVICE ROLE key must NEVER go here — only in populate_supabase.py (runs locally).
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';        // e.g. https://xxxx.supabase.co
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';   // starts with eyJ...
+  const USE_SUPABASE  = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+
+  const CDN            = 'https://cdn.jsdelivr.net/gh/GoldHEN/GoldHEN_Cheat_Repository@main';
+  const RAWG_KEY       = ''; // optional: get a free key at rawg.io for cover art
+  const RAWG_BASE      = 'https://api.rawg.io/api';
+  const STORAGE_BUCKET = 'ps4cheats';
+  const STORAGE_FILE   = 'games.json';
+  const CUSTOM_COVERS  = { 'CUSA02290': 'https://images.pushsquare.com/83c6354db18f1/call-of-duty-black-ops-iii-cover.cover_large.jpg' };
 
   // ─── INIT ──────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
     try {
-      if (window.supabase && SUPABASE_URL && SUPABASE_KEY) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      if (window.supabase && USE_SUPABASE)
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
     } catch(e) {}
     document.getElementById('searchInput').addEventListener('input', () => renderResults());
     document.getElementById('fileInput').addEventListener('change', e => handleLocalFiles(e.target.files));
@@ -611,25 +618,47 @@
 
   // ─── AUTO LOAD ─────────────────────────────────────────
   async function autoLoadData() {
-    const wrap = document.getElementById('autoProgress');
     const fill = document.getElementById('autoProgressFill');
     const txt  = document.getElementById('autoProgressText');
-    wrap.style.display = 'block';
-    try {
-      if (!supabaseClient) throw new Error('No Supabase');
-      txt.textContent = 'Loading saved data...';
-      fill.style.width = '30%';
-      const { data } = await supabaseClient.storage.from(STORAGE_BUCKET).download(STORAGE_FILE);
-      if (!data) throw new Error('No data');
-      allGames = JSON.parse(await data.text());
-      if (!allGames.length) throw new Error('Empty');
-      fill.style.width = '100%';
-      txt.textContent = `✅ ${allGames.length} games loaded`;
-      setTimeout(showMainLayout, 600);
-    } catch(e) {
-      txt.textContent = '📦 No data yet — click Sync to load cheats';
-      document.getElementById('syncBtnBig').style.animation = 'pulse 2s infinite';
+
+    // ── Load from Supabase DB (primary path for deployed site) ─────────
+    if (supabaseClient) {
+      try {
+        txt.textContent  = 'Loading games…';
+        fill.style.width = '10%';
+
+        // Paginate: Supabase has a default 1000-row limit per request
+        const PAGE = 1000;
+        let from = 0, rows = [];
+        while (true) {
+          fill.style.width = Math.min(10 + Math.round(rows.length / 1700 * 85), 95) + '%';
+          txt.textContent  = `Loading… ${rows.length} games`;
+          const { data, error } = await supabaseClient
+            .from('games')
+            .select('data')
+            .range(from, from + PAGE - 1);
+          if (error) throw new Error(error.message);
+          if (!data || data.length === 0) break;
+          rows.push(...data.map(r => r.data));
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+
+        if (!rows.length) throw new Error('Database is empty — run populate_supabase.py first');
+
+        allGames = rows.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        fill.style.width = '100%';
+        txt.textContent  = `✅ ${allGames.length} games loaded`;
+        setTimeout(showMainLayout, 400);
+        return;
+      } catch(e) {
+        console.warn('Supabase load failed, falling back to CDN:', e.message);
+        txt.textContent = '⚠️ Supabase error — fetching from GitHub CDN…';
+      }
     }
+
+    // ── Fallback: fetch from GitHub CDN (no Supabase configured) ─────────
+    await syncFromGitHub();
   }
 
   // ─── SHOW MAIN ─────────────────────────────────────────
@@ -2448,15 +2477,16 @@
   }
 
   // ─── SYNC FROM GITHUB ──────────────────────────────────
-  async function syncFromGitHub() {
+  // silent=true → background refresh, no UI changes
+  async function syncFromGitHub(silent = false) {
     const syncBtn    = document.getElementById('syncBtn');
     const syncBtnBig = document.getElementById('syncBtnBig');
-    const wrap = document.getElementById('autoProgress');
     const fill = document.getElementById('autoProgressFill');
     const txt  = document.getElementById('autoProgressText');
-    wrap.style.display = 'block';
-    if (syncBtn)    { syncBtn.disabled = true; syncBtn.textContent = 'Syncing...'; }
-    if (syncBtnBig) { syncBtnBig.disabled = true; syncBtnBig.style.animation = 'none'; }
+    if (!silent) {
+      if (syncBtn)    { syncBtn.disabled = true; syncBtn.textContent = 'Syncing...'; }
+      if (syncBtnBig) { syncBtnBig.disabled = true; syncBtnBig.style.display = 'none'; }
+    }
 
     try {
       // Step 1: load existing
@@ -2527,26 +2557,37 @@
 
       allGames = newGamesData;
 
-      // Step 6: save
+      // Step 6: save to localStorage (primary) + Supabase (optional)
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(allGames));
+        localStorage.setItem(CACHE_TS, String(Date.now()));
+      } catch(e) { console.warn('localStorage save failed', e); }
       if (supabaseClient) {
-        fill.style.width='96%'; txt.textContent='Saving...';
-        const blob = new Blob([JSON.stringify(allGames)],{type:'application/json'});
-        await supabaseClient.storage.from(STORAGE_BUCKET).upload(STORAGE_FILE,blob,{upsert:true,contentType:'application/json'});
+        try {
+          fill.style.width='96%'; if (!silent) txt.textContent='Saving...';
+          const blob = new Blob([JSON.stringify(allGames)],{type:'application/json'});
+          await supabaseClient.storage.from(STORAGE_BUCKET).upload(STORAGE_FILE,blob,{upsert:true,contentType:'application/json'});
+        } catch(e) { console.warn('Supabase save failed', e); }
       }
 
       fill.style.width='100%';
-      txt.textContent = isFirstSync
-        ? `✅ ${allGames.length} games loaded`
-        : `✅ Sync done — ${newCount} new, ${updatedCount} updated (${allGames.length} total)`;
-
-      setTimeout(showMainLayout, 800);
+      if (!silent) {
+        txt.textContent = isFirstSync
+          ? `✅ ${allGames.length} games loaded`
+          : `✅ Updated — ${newCount} new, ${updatedCount} updated (${allGames.length} total)`;
+        setTimeout(showMainLayout, 800);
+      }
 
     } catch(err) {
       console.error(err);
-      txt.textContent = '❌ ' + err.message;
+      if (!silent) {
+        txt.textContent = '❌ ' + err.message;
+        const btn = document.getElementById('syncBtnBig');
+        if (btn) { btn.style.display = ''; btn.disabled = false; }
+      }
     } finally {
-      if (syncBtn)    { syncBtn.disabled=false; syncBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg> Sync'; }
-      if (syncBtnBig) { syncBtnBig.disabled=false; syncBtnBig.textContent='🔄 Re-Sync'; }
+      const syncBtn = document.getElementById('syncBtn');
+      if (syncBtn) { syncBtn.disabled=false; syncBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg> Sync'; }
     }
   }
 
