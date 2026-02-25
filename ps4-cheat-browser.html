@@ -1,0 +1,2573 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS4 Cheat Browser — GoldHEN</title>
+<!-- Version: 2.1 - Fixed script loading -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #f0f4f8;
+    --bg2:        #e8edf3;
+    --surface:    #ffffff;
+    --card:       #ffffff;
+    --card-hover: #f7f9fc;
+    --border:     #dde3ec;
+    --border2:    #c9d2e0;
+    --accent:     #2563eb;
+    --accent-glow:rgba(37,99,235,0.12);
+    --accent2:    #e11d48;
+    --text:       #0f172a;
+    --text2:      #1e293b;
+    --muted:      #64748b;
+    --muted2:     #94a3b8;
+    --green:      #059669;
+    --gold:       #d97706;
+    --radius:     14px;
+    --radius-sm:  9px;
+    --shadow-sm:  0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.06);
+    --shadow-md:  0 4px 12px rgba(15,23,42,0.10), 0 2px 4px rgba(15,23,42,0.06);
+    --shadow-lg:  0 10px 28px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
+  }
+
+  /* ─── SCROLLBAR ──────────────────── */
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted2); }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+    background-image:
+      radial-gradient(ellipse 90% 40% at 50% -5%, rgba(37,99,235,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 30% at 90% 100%, rgba(37,99,235,0.04) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+
+  /* ─── TOP NAV ─────────────────────── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.90);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid rgba(221,227,236,0.9);
+    padding: 0 28px;
+    display: flex; align-items: center; gap: 18px;
+    height: 64px;
+    box-shadow: 0 1px 0 rgba(15,23,42,0.06);
+  }
+  .topbar-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 800; letter-spacing: 3px;
+    color: var(--accent); text-transform: uppercase; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-logo::before {
+    content: '';
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+  }
+  .topbar-logo span { color: var(--text2); font-weight: 600; }
+
+  #searchInput {
+    flex: 1; max-width: 520px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400;
+    padding: 10px 16px 10px 40px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  #searchInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: var(--surface);
+  }
+  #searchInput::placeholder { color: var(--muted2); }
+  .search-wrap { position: relative; flex: 1; max-width: 520px; }
+  .search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted2); width: 15px; height: 15px; pointer-events: none; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+
+  /* ─── SYNC PANEL ─────────────────── */
+  #syncPanel {
+    max-width: 480px; margin: 72px auto 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px; padding: 48px 44px;
+    text-align: center;
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(37,99,235,0.05);
+  }
+  #syncPanel .panel-icon {
+    font-size: 52px; margin-bottom: 18px; display: block;
+  }
+  #syncPanel h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 30px; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text); margin-bottom: 10px;
+  }
+  #syncPanel p { color: var(--muted); font-size: 14px; line-height: 1.75; margin-bottom: 32px; }
+
+  .progress-wrap { margin: 20px 0; display: none; }
+  .progress-bar-bg {
+    height: 6px; background: var(--bg2);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #60a5fa, var(--accent));
+    background-size: 200% 100%;
+    border-radius: 4px; width: 0%;
+    transition: width 0.2s;
+    animation: shimmer 2s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .progress-text {
+    font-size: 12px; color: var(--accent); margin-top: 10px;
+    font-family: monospace; letter-spacing: 0.5px;
+  }
+
+  .sync-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 34px;
+    background: var(--accent);
+    border: none; border-radius: var(--radius-sm);
+    color: #fff; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 3px 12px rgba(37,99,235,0.30);
+  }
+  .sync-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37,99,235,0.38);
+  }
+  .sync-btn:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(37,99,235,0.25); }
+  .sync-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ─── MAIN LAYOUT ─────────────────── */
+  #mainLayout {
+    display: none;
+    max-width: 1280px; margin: 0 auto;
+    padding: 28px 28px 100px;
+  }
+
+  /* ─── TOOLBAR ─────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 7px 20px;
+    border: 1.5px solid var(--border2);
+    border-radius: 50px;
+    background: var(--surface); color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 1.5px;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+  }
+  .tab-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-glow); }
+  .tab-btn.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    box-shadow: 0 2px 10px rgba(37,99,235,0.28);
+  }
+  .tab-btn.fav-active {
+    background: var(--gold); border-color: var(--gold); color: #fff;
+    box-shadow: 0 2px 10px rgba(217,119,6,0.28);
+  }
+  .stat-pill {
+    font-size: 13px; color: var(--muted); font-family: 'Inter', sans-serif;
+    background: var(--surface); border: 1.5px solid var(--border);
+    padding: 5px 14px; border-radius: 50px; white-space: nowrap;
+    margin-left: auto; box-shadow: var(--shadow-sm);
+  }
+  .stat-pill b { color: var(--text2); font-weight: 600; }
+
+  /* ─── GAME GRID ───────────────────── */
+  #results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 18px;
+  }
+
+  .game-tile {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; cursor: pointer;
+    transition: transform 0.22s cubic-bezier(.34,1.4,.64,1), border-color 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.22s ease both;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+  .game-tile:hover {
+    transform: translateY(-5px) scale(1.015);
+    border-color: rgba(37,99,235,0.4);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(37,99,235,0.10);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tile-cover {
+    width: 100%; aspect-ratio: 2/3;
+    background: var(--bg2); overflow: hidden; position: relative;
+  }
+  .tile-cover img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.35s ease;
+  }
+  .game-tile:hover .tile-cover img { transform: scale(1.04); }
+
+  .tile-fav {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,0.82); backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 50%; width: 32px; height: 32px;
+    font-size: 14px; cursor: pointer; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    opacity: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+  .game-tile:hover .tile-fav { opacity: 1; }
+  .tile-fav:hover { transform: scale(1.2); background: rgba(251,243,219,0.95); }
+  .tile-fav:has(+ *), .tile-fav[data-faved="true"] { opacity: 1; }
+
+  .tile-cheat-badge {
+    position: absolute; bottom: 8px; left: 8px;
+    background: rgba(255,255,255,0.88); backdrop-filter: blur(8px);
+    color: var(--green); font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 50px;
+    border: 1px solid rgba(5,150,105,0.20);
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  }
+  .tile-body {
+    padding: 12px 13px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .tile-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; color: var(--text);
+    line-height: 1.3; letter-spacing: 0.4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tile-meta {
+    font-size: 11px; color: var(--muted2); margin-top: 5px;
+    font-family: 'Inter', sans-serif; font-weight: 400;
+  }
+
+  .no-results {
+    grid-column: 1/-1; text-align: center;
+    padding: 100px 20px; color: var(--muted2);
+  }
+  .no-results .emoji { font-size: 52px; display: block; margin-bottom: 16px; }
+  .no-results p { font-size: 18px; color: var(--muted); }
+
+  /* ─── DETAIL PAGE ─────────────────── */
+  #detailPage {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    overflow-y: auto;
+    animation: slideIn 0.25s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .detail-topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid rgba(221,227,236,0.9);
+    padding: 0 28px;
+    display: flex; align-items: center; gap: 14px;
+    height: 62px;
+    box-shadow: 0 1px 0 rgba(15,23,42,0.06);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text2);
+    padding: 8px 16px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    white-space: nowrap; box-shadow: var(--shadow-sm);
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .detail-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 19px; font-weight: 800; letter-spacing: 0.8px;
+    color: var(--text); flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .detail-fav-btn {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 8px 14px; cursor: pointer;
+    font-size: 18px; transition: border-color 0.2s, background 0.2s;
+    line-height: 1; box-shadow: var(--shadow-sm);
+  }
+  .detail-fav-btn:hover { border-color: var(--gold); background: rgba(217,119,6,0.07); }
+
+  .detail-body {
+    max-width: 960px; margin: 0 auto;
+    padding: 36px 28px 100px;
+  }
+
+  .detail-hero {
+    position: relative;
+    display: flex; gap: 32px; align-items: flex-start;
+    margin-bottom: 40px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 18px; padding: 28px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .detail-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(37,99,235,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .detail-cover {
+    flex-shrink: 0; width: 150px; height: 225px;
+    border-radius: var(--radius); overflow: hidden;
+    border: 2px solid var(--border2);
+    box-shadow: var(--shadow-md);
+    position: relative; z-index: 1;
+  }
+  .detail-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .detail-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .detail-game-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(26px, 4.5vw, 44px); font-weight: 800;
+    letter-spacing: 0.5px; line-height: 1.1; color: var(--text);
+    margin-bottom: 16px;
+  }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dtag {
+    font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 5px 13px; border-radius: 50px;
+    border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--muted);
+  }
+  .dtag.blue {
+    color: var(--accent); border-color: rgba(37,99,235,0.25);
+    background: rgba(37,99,235,0.06);
+  }
+  .dtag.green {
+    color: var(--green); border-color: rgba(5,150,105,0.25);
+    background: rgba(5,150,105,0.06);
+  }
+
+  /* ─── VERSION BLOCKS (accordion) ──── */
+  .version-block { border-bottom: 1px solid var(--border); }
+  .version-block:last-child { border-bottom: none; }
+  .version-block-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 20px; cursor: pointer;
+    transition: background 0.15s; user-select: none;
+  }
+  .version-block-header:hover { background: var(--card-hover); }
+  .vbh-ver {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 1px;
+    color: var(--text); flex: 1;
+  }
+  .vbh-count { font-size: 12px; color: var(--muted); font-family: 'Inter', sans-serif; }
+  .vbh-chevron { font-size: 11px; color: var(--muted2); transition: transform 0.2s; margin-left: 4px; }
+  .version-block.open .vbh-chevron { transform: rotate(180deg); color: var(--accent); }
+  .version-block-cheats { display: none; }
+  .version-block.open .version-block-cheats { display: block; }
+
+  /* ─── ID TABS (CUSA selector) ───────── */
+  .vtab-bar {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding-bottom: 12px; margin-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+    scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
+  }
+  .vtab-bar::-webkit-scrollbar { height: 4px; }
+  .vtab-bar::-webkit-scrollbar-track { background: transparent; }
+  .vtab-bar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .vtab-btn {
+    display: flex; flex-direction: column; align-items: flex-start;
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 9px 15px;
+    cursor: pointer; white-space: nowrap; min-width: max-content;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .vtab-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .vtab-btn.active {
+    border-color: var(--accent); background: rgba(37,99,235,0.08);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.14);
+  }
+  .vtab-id {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent);
+    line-height: 1;
+  }
+  .vtab-ver {
+    font-size: 11px; color: var(--muted); margin-top: 4px;
+    font-family: 'Inter', sans-serif;
+  }
+  .vtab-panel { display: none; }
+  .vtab-panel.active { display: block; }
+  .vtab-panels {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
+  }
+
+  .cheat-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row:hover { background: rgba(37,99,235,0.03); }
+  .cheat-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent2); flex-shrink: 0;
+  }
+  .cheat-name { font-size: 14px; font-weight: 400; color: var(--text2); flex: 1; line-height: 1.4; }
+  .cheat-type {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+    background: var(--bg2); padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .vb-credits {
+    padding: 10px 20px; font-size: 12px; color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    background: var(--bg2); border-top: 1px solid var(--border);
+  }
+  .vb-credits span { color: var(--accent); }
+
+  /* ─── MISC ────────────────────────── */
+  .icon-btn {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text2); padding: 8px 14px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); box-shadow: var(--shadow-md); }
+  .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+  #scrollTop {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--accent); border: none; color: #fff;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+    cursor: pointer; font-size: 17px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s, transform 0.2s;
+    z-index: 100;
+  }
+  #scrollTop.visible { opacity: 1; pointer-events: all; }
+  #scrollTop:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.42); }
+
+  @keyframes pulse { 0%,100%{transform:scale(1);box-shadow:0 3px 12px rgba(37,99,235,0.30)} 50%{transform:scale(1.04);box-shadow:0 7px 24px rgba(37,99,235,0.46)} }
+
+  /* ─── SECTION LABEL ──────────────── */
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--muted2);
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topbar">
+  <div class="topbar-logo">PS4 <span>CHEATS</span></div>
+  <div class="search-wrap" id="searchWrap" style="display:none">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+    <input type="text" id="searchInput" placeholder="Search games or CUSA ID..." autocomplete="off" spellcheck="false">
+  </div>
+  <div class="topbar-actions">
+    <button class="tab-btn active" id="tabAll" onclick="setTab('all')" style="display:none">🎮 All</button>
+    <button class="tab-btn" id="tabFavs" onclick="setTab('favs')" style="display:none">⭐ Favorites</button>
+    <button class="icon-btn" id="syncBtn" onclick="syncFromGitHub()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      Sync
+    </button>
+    <button class="icon-btn" onclick="document.getElementById('fileInput').click()">📁 Local</button>
+    <input type="file" id="fileInput" multiple accept=".json" style="display:none">
+  </div>
+</nav>
+
+<!-- SYNC / FIRST LOAD PANEL -->
+<div id="syncPanel">
+  <span class="panel-icon">🎮</span>
+  <h2>PS4 Cheat Browser</h2>
+  <p>1700+ games from the GoldHEN Cheat Repository.<br>Sync once and browse offline.</p>
+  <div class="progress-wrap" id="autoProgress">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="autoProgressFill"></div></div>
+    <div class="progress-text" id="autoProgressText">Loading...</div>
+  </div>
+  <button class="sync-btn" id="syncBtnBig" onclick="syncFromGitHub()">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+    Sync from GitHub
+  </button>
+  <div style="margin-top:14px;font-size:12px;color:var(--muted);font-family:monospace">
+    <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+      <input type="checkbox" id="forceCovers"> Refresh all covers
+    </label>
+  </div>
+</div>
+
+<!-- MAIN GAME LIST -->
+<div id="mainLayout">
+  <div class="toolbar">
+    <span class="stat-pill" id="statPill">...</span>
+  </div>
+  <div id="results"></div>
+</div>
+
+<!-- DETAIL PAGE (full-screen overlay) -->
+<div id="detailPage">
+  <div class="detail-topbar">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="detail-title" id="detailTitle"></div>
+    <button class="detail-fav-btn" id="detailFavBtn" onclick="toggleDetailFav()"></button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<button id="scrollTop" onclick="(document.getElementById('detailPage').style.display==='block'?document.getElementById('detailPage'):window).scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- Load Supabase SDK synchronously -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  'use strict';
+  let allGames = [];
+  let supabaseClient = null;
+  let favorites = new Set(JSON.parse(localStorage.getItem('ps4_favs') || '[]'));
+  let currentTab = 'all';
+  let currentGroup = null; // currently open group on detail page
+
+  const SUPABASE_URL    = 'https://bnljbsdbosnxsgvriosr.supabase.co';
+  const SUPABASE_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubGpic2Rib3NueHNndnJpb3NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2NDA4NDQsImV4cCI6MjA4NzIxNjg0NH0.KBiswV89XDnjtWMOFk4VGhjcwapHEsLhdpX_2K60p7c';
+  const STORAGE_BUCKET  = 'ps4cheats';
+  const STORAGE_FILE    = 'games.json';
+  const CDN             = 'https://cdn.jsdelivr.net/gh/GoldHEN/GoldHEN_Cheat_Repository@main';
+  const RAWG_KEY        = '0dc623941f204f2882d26015d71efb12';
+  const RAWG_BASE       = 'https://api.rawg.io/api';
+  const CUSTOM_COVERS   = { 'CUSA02290': 'https://images.pushsquare.com/83c6354db18f1/call-of-duty-black-ops-iii-cover.cover_large.jpg' };
+
+  // ─── INIT ──────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      if (window.supabase) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {}
+    document.getElementById('searchInput').addEventListener('input', () => renderResults());
+    document.getElementById('fileInput').addEventListener('change', e => handleLocalFiles(e.target.files));
+    autoLoadData();
+  });
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+  });
+
+  // ─── AUTO LOAD ─────────────────────────────────────────
+  async function autoLoadData() {
+    const wrap = document.getElementById('autoProgress');
+    const fill = document.getElementById('autoProgressFill');
+    const txt  = document.getElementById('autoProgressText');
+    wrap.style.display = 'block';
+    try {
+      if (!supabaseClient) throw new Error('No Supabase');
+      txt.textContent = 'Loading saved data...';
+      fill.style.width = '30%';
+      const { data } = await supabaseClient.storage.from(STORAGE_BUCKET).download(STORAGE_FILE);
+      if (!data) throw new Error('No data');
+      allGames = JSON.parse(await data.text());
+      if (!allGames.length) throw new Error('Empty');
+      fill.style.width = '100%';
+      txt.textContent = `✅ ${allGames.length} games loaded`;
+      setTimeout(showMainLayout, 600);
+    } catch(e) {
+      txt.textContent = '📦 No data yet — click Sync to load cheats';
+      document.getElementById('syncBtnBig').style.animation = 'pulse 2s infinite';
+    }
+  }
+
+  // ─── SHOW MAIN ─────────────────────────────────────────
+  function showMainLayout() {
+    document.getElementById('syncPanel').style.display = 'none';
+    document.getElementById('mainLayout').style.display = 'block';
+    document.getElementById('searchWrap').style.display = 'flex';
+    document.getElementById('tabAll').style.display = '';
+    document.getElementById('tabFavs').style.display = '';
+    renderResults();
+  }
+
+  // ─── TABS ──────────────────────────────────────────────
+  function setTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabAll').className  = 'tab-btn' + (tab === 'all'  ? ' active' : '');
+    document.getElementById('tabFavs').className = 'tab-btn' + (tab === 'favs' ? ' fav-active' : '');
+    document.getElementById('searchInput').value = '';
+    renderResults();
+  }
+
+  // ─── GROUP LOGIC ───────────────────────────────────────
+  function parseVersion(v) {
+    if (v == null) return 0;
+    const n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  // ─── CUSA ID GROUPING MAP (from games_list_for_covers_grouped.txt) ────────
+  const _CUSA_ID_MAP = {
+    'CUSA00002': { key: 'CUSA00002', display: 'Killzone Shadow Fall' },
+    'CUSA00004': { key: 'CUSA00309', display: 'inFAMOUS: Second Son' },
+    'CUSA00005': { key: 'CUSA00005', display: 'Resogun' },
+    'CUSA00009': { key: 'CUSA00009', display: 'Assassins Creed IV Black Flag' },
+    'CUSA00016': { key: 'CUSA00021', display: 'Watch_Dogs' },
+    'CUSA00018': { key: 'CUSA00025', display: 'Call of Duty: Ghosts' },
+    'CUSA00021': { key: 'CUSA00021', display: 'Watch_Dogs' },
+    'CUSA00025': { key: 'CUSA00025', display: 'Call of Duty: Ghosts' },
+    'CUSA00031': { key: 'CUSA00031', display: 'Rayman Legends' },
+    'CUSA00049': { key: 'CUSA00049', display: 'Battlefield 4' },
+    'CUSA00051': { key: 'CUSA00051', display: 'Injustice: Gods Among Us Ultimate Edition' },
+    'CUSA00054': { key: 'CUSA00054', display: 'Mad Max' },
+    'CUSA00069': { key: 'CUSA00031', display: 'Rayman Legends' },
+    'CUSA00076': { key: 'CUSA00785', display: 'The Order: 1886' },
+    'CUSA00078': { key: 'CUSA03991', display: 'Dying Light' },
+    'CUSA00100': { key: 'CUSA00785', display: 'The Order: 1886' },
+    'CUSA00103': { key: 'CUSA00054', display: 'Mad Max' },
+    'CUSA00109': { key: 'CUSA00109', display: 'Tomb Raider: Definitive Edition' },
+    'CUSA00133': { key: 'CUSA00135', display: 'Batman: Arkham Knight' },
+    'CUSA00135': { key: 'CUSA00135', display: 'Batman: Arkham Knight' },
+    'CUSA00168': { key: 'CUSA00168', display: 'Need for Speed Rivals' },
+    'CUSA00176': { key: 'CUSA00176', display: 'Dead Nation' },
+    'CUSA00186': { key: 'CUSA00186', display: 'Zen Pinball 2' },
+    'CUSA00191': { key: 'CUSA00002', display: 'Killzone Shadow Fall' },
+    'CUSA00203': { key: 'CUSA00375', display: 'The Evil Within' },
+    'CUSA00207': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA00208': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA00220': { key: 'CUSA00220', display: 'Dragon Age: Inquisition' },
+    'CUSA00223': { key: 'CUSA00309', display: 'inFAMOUS: Second Son' },
+    'CUSA00242': { key: 'CUSA00242', display: 'Diablo III: Reaper of Souls' },
+    'CUSA00250': { key: 'CUSA00250', display: 'Thief' },
+    'CUSA00265': { key: 'CUSA00265', display: 'Minecraft: PlayStation4 Edition' },
+    'CUSA00309': { key: 'CUSA00309', display: 'inFAMOUS: Second Son' },
+    'CUSA00315': { key: 'CUSA00315', display: 'The Swapper' },
+    'CUSA00320': { key: 'CUSA00320', display: 'Wolfenstein: The New Order' },
+    'CUSA00326': { key: 'CUSA00326', display: 'Oddworld: Abe\'s Oddysee - New \'n\' Tasty' },
+    'CUSA00341': { key: 'CUSA00341', display: 'Uncharted 4: A Thief’s End' },
+    'CUSA00369': { key: 'CUSA00377', display: 'Lords of the Fallen' },
+    'CUSA00375': { key: 'CUSA00375', display: 'The Evil Within' },
+    'CUSA00377': { key: 'CUSA00377', display: 'Lords of the Fallen' },
+    'CUSA00378': { key: 'CUSA00378', display: 'Sniper Elite 3' },
+    'CUSA00394': { key: 'CUSA00394', display: 'The Amazing Spider-Man 2' },
+    'CUSA00409': { key: 'CUSA07712', display: 'Outlast' },
+    'CUSA00411': { key: 'CUSA00419', display: 'Grand Theft Auto V' },
+    'CUSA00419': { key: 'CUSA00419', display: 'Grand Theft Auto V' },
+    'CUSA00428': { key: 'CUSA00428', display: 'Toy Soldiers War Chest' },
+    'CUSA00433': { key: 'CUSA00242', display: 'Diablo III: Reaper of Souls' },
+    'CUSA00434': { key: 'CUSA00242', display: 'Diablo III: Reaper of Souls' },
+    'CUSA00462': { key: 'CUSA00462', display: 'Far Cry 4' },
+    'CUSA00472': { key: 'CUSA00472', display: 'Transformers: Rise of the Dark Spark' },
+    'CUSA00496': { key: 'CUSA00462', display: 'Far Cry 4' },
+    'CUSA00503': { key: 'CUSA00220', display: 'Dragon Age: Inquisition' },
+    'CUSA00540': { key: 'CUSA00540', display: 'Tiny Troopers' },
+    'CUSA00552': { key: 'CUSA00557', display: 'The Last of Us Remastered' },
+    'CUSA00556': { key: 'CUSA00557', display: 'The Last of Us Remastered' },
+    'CUSA00557': { key: 'CUSA00557', display: 'The Last of Us Remastered' },
+    'CUSA00587': { key: 'CUSA00587', display: 'Rogue Legacy' },
+    'CUSA00593': { key: 'CUSA00593', display: 'Metro Redux' },
+    'CUSA00605': { key: 'CUSA00605', display: 'Assassin\'s Creed Unity' },
+    'CUSA00606': { key: 'CUSA00605', display: 'Assassin\'s Creed Unity' },
+    'CUSA00683': { key: 'CUSA00593', display: 'Metro Redux' },
+    'CUSA00706': { key: 'CUSA00706', display: 'How to Survive: Storm Warning Edition' },
+    'CUSA00717': { key: 'CUSA00717', display: 'Detroit: Become Human' },
+    'CUSA00731': { key: 'CUSA00731', display: 'The Legend of Korra' },
+    'CUSA00737': { key: 'CUSA00740', display: 'Terraria' },
+    'CUSA00740': { key: 'CUSA00740', display: 'Terraria' },
+    'CUSA00743': { key: 'CUSA00743', display: 'Peggle 2' },
+    'CUSA00744': { key: 'CUSA00744', display: 'Minecraft' },
+    'CUSA00773': { key: 'CUSA00773', display: 'MONOPOLY PLUS' },
+    'CUSA00781': { key: 'CUSA00781', display: 'WWE 2K15' },
+    'CUSA00785': { key: 'CUSA00785', display: 'The Order: 1886' },
+    'CUSA00791': { key: 'CUSA00791', display: 'EP8918-CUSA00791_00-NPPGAMENPPGAMENP' },
+    'CUSA00792': { key: 'CUSA01344', display: 'The Binding of Isaac: Rebirth' },
+    'CUSA00803': { key: 'CUSA00851', display: 'Call of Duty: Advanced Warfare' },
+    'CUSA00806': { key: 'CUSA00806', display: 'EP0082-CUSA00806_00-LARACROFT2OSIRIS' },
+    'CUSA00849': { key: 'CUSA00849', display: '#KILLALLZOMBIES' },
+    'CUSA00851': { key: 'CUSA00851', display: 'Call of Duty: Advanced Warfare' },
+    'CUSA00897': { key: 'CUSA00897', display: 'inFAMOUS First Light' },
+    'CUSA00900': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA00917': { key: 'CUSA00917', display: 'Uncharted 4' },
+    'CUSA00937': { key: 'CUSA00937', display: 'FINAL FANTASY TYPE-0 HD' },
+    'CUSA00938': { key: 'CUSA00938', display: 'Homefront: The Revolution' },
+    'CUSA00939': { key: 'CUSA00939', display: 'Saints Row Gat Outa Hell' },
+    'CUSA01004': { key: 'CUSA01004', display: 'Sleeping Dogs' },
+    'CUSA01022': { key: 'CUSA01022', display: 'DmC Devil May Cry: Definitive Edition' },
+    'CUSA01047': { key: 'CUSA01073', display: 'Ratchet & Clank' },
+    'CUSA01067': { key: 'CUSA01067', display: 'Resident Evil' },
+    'CUSA01073': { key: 'CUSA01073', display: 'Ratchet & Clank' },
+    'CUSA01082': { key: 'CUSA00375', display: 'The Evil Within' },
+    'CUSA01113': { key: 'CUSA01113', display: 'Gravity Rush Remastered' },
+    'CUSA01133': { key: 'CUSA01133', display: 'Resident Evil: Revelations 2' },
+    'CUSA01135': { key: 'CUSA01135', display: 'Trine Enchanted Edition' },
+    'CUSA01140': { key: 'CUSA01154', display: 'Metal Gear Solid V: The Phantom Pain' },
+    'CUSA01141': { key: 'CUSA01133', display: 'Resident Evil: Revelations 2' },
+    'CUSA01154': { key: 'CUSA01154', display: 'Metal Gear Solid V: The Phantom Pain' },
+    'CUSA01159': { key: 'CUSA01159', display: '戦国BASARA4 皇' },
+    'CUSA01166': { key: 'CUSA01166', display: 'AKIBA\'S TRIP: UNDEAD ＆ UNDRESSED' },
+    'CUSA01222': { key: 'CUSA01222', display: 'STREET FIGHTER V' },
+    'CUSA01244': { key: 'CUSA01244', display: 'FINAL FANTASY X/X-2 HD Remaster' },
+    'CUSA01273': { key: 'CUSA01273', display: 'Chasm' },
+    'CUSA01341': { key: 'CUSA01341', display: 'Dragon Ball Xenoverse' },
+    'CUSA01344': { key: 'CUSA01344', display: 'The Binding of Isaac: Rebirth' },
+    'CUSA01345': { key: 'CUSA01773', display: 'Zombie Army Trilogy' },
+    'CUSA01363': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA01410': { key: 'CUSA01410', display: 'Transformers Devastation' },
+    'CUSA01493': { key: 'CUSA02748', display: 'Just Cause 3' },
+    'CUSA01499': { key: 'CUSA01499', display: 'Mirrors Edge Catalyst' },
+    'CUSA01519': { key: 'CUSA01519', display: 'LEGO Jurassic World' },
+    'CUSA01540': { key: 'CUSA01540', display: 'Wolfenstein: The Old Blood' },
+    'CUSA01589': { key: 'CUSA01589', display: 'Dark Souls II' },
+    'CUSA01608': { key: 'CUSA01608', display: 'Enter The Gungeon' },
+    'CUSA01615': { key: 'CUSA01615', display: 'FINAL FANTASY XV' },
+    'CUSA01618': { key: 'CUSA01618', display: 'Yu-Gi-Oh! Legacy of the Duelist' },
+    'CUSA01623': { key: 'CUSA01623', display: 'God of War III Remastered' },
+    'CUSA01708': { key: 'CUSA01708', display: 'Devil May Cry 4 Special Edition' },
+    'CUSA01714': { key: 'CUSA01714', display: 'GOD EATER 2 RAGE BURST' },
+    'CUSA01715': { key: 'CUSA01623', display: 'God of War III Remastered' },
+    'CUSA01760': { key: 'CUSA01589', display: 'Dark Souls II' },
+    'CUSA01761': { key: 'CUSA01761', display: 'PAYDAY 2: CRIMEWAVE EDITION' },
+    'CUSA01765': { key: 'CUSA01765', display: '[PROTOTYPE2]' },
+    'CUSA01773': { key: 'CUSA01773', display: 'Zombie Army Trilogy' },
+    'CUSA01788': { key: 'CUSA01788', display: 'Tom Clancys Rainbow Six Siege' },
+    'CUSA01796': { key: 'CUSA01796', display: 'Sniper Elite 3 Ultimate Edition' },
+    'CUSA01836': { key: 'CUSA01836', display: 'Deus Ex: Mankind Divided' },
+    'CUSA01839': { key: 'CUSA01839', display: 'Street Figther 4' },
+    'CUSA01843': { key: 'CUSA01843', display: 'Teenage Mutant Ninja Turtles: Mutants in Manhattan' },
+    'CUSA01845': { key: 'CUSA01845', display: 'TRANSFORMERS: Fall of Cybertron' },
+    'CUSA01967': { key: 'CUSA10212', display: 'Horizon Zero Dawn: Complete Edition' },
+    'CUSA02000': { key: 'CUSA02000', display: 'Batman: Return to Arkham - Arkham City' },
+    'CUSA02017': { key: 'CUSA02017', display: 'Risen 3: Titan Lords - Enhanced Edition' },
+    'CUSA02057': { key: 'CUSA02057', display: 'Bastion' },
+    'CUSA02092': { key: 'CUSA02092', display: 'Doom' },
+    'CUSA02134': { key: 'CUSA02134', display: 'Killing Floor 2' },
+    'CUSA02152': { key: 'CUSA02152', display: 'Middle-earth: Shadow of Mordor - Game of the Year Edition' },
+    'CUSA02159': { key: 'CUSA02159', display: 'Onechanbara Z2: Chaos' },
+    'CUSA02231': { key: 'CUSA02231', display: 'Dishonored: Definitive Edition' },
+    'CUSA02290': { key: 'CUSA03005', display: 'Call of Duty: Black Ops III' },
+    'CUSA02320': { key: 'CUSA02320', display: 'Uncharted: The Nathan Drake Collection' },
+    'CUSA02343': { key: 'CUSA02320', display: 'Uncharted: The Nathan Drake Collection' },
+    'CUSA02350': { key: 'CUSA02350', display: 'Until Dawn: Rush of Blood' },
+    'CUSA02353': { key: 'CUSA02353', display: 'Salt and Sanctuary' },
+    'CUSA02376': { key: 'CUSA02376', display: 'Assassins Creed Syndicate' },
+    'CUSA02387': { key: 'CUSA02429', display: 'Battlefield 1' },
+    'CUSA02396': { key: 'CUSA02396', display: 'Frozen: Snowball Fight' },
+    'CUSA02419': { key: 'CUSA02419', display: 'Darksiders II Deathinitive Edition' },
+    'CUSA02420': { key: 'CUSA02419', display: 'Darksiders II Deathinitive Edition' },
+    'CUSA02429': { key: 'CUSA02429', display: 'Battlefield 1' },
+    'CUSA02437': { key: 'CUSA02437', display: 'Saint Seiya: Soldiers Soul' },
+    'CUSA02475': { key: 'CUSA02475', display: 'Matterfall' },
+    'CUSA02491': { key: 'CUSA02491', display: 'Mass Effect: Andromeda' },
+    'CUSA02510': { key: 'CUSA02510', display: 'Tales of Zestiria' },
+    'CUSA02557': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA02560': { key: 'CUSA02560', display: 'SWORD ART ONLINE Re: Hollow Fragment' },
+    'CUSA02624': { key: 'CUSA03005', display: 'Call of Duty: Black Ops III' },
+    'CUSA02629': { key: 'CUSA02629', display: 'Disgaea 5: Alliance of Vengeance' },
+    'CUSA02646': { key: 'CUSA02646', display: 'This War of Mine' },
+    'CUSA02696': { key: 'CUSA02696', display: 'This War of Mine: The Little Ones' },
+    'CUSA02747': { key: 'CUSA02748', display: 'Just Cause 3' },
+    'CUSA02748': { key: 'CUSA02748', display: 'Just Cause 3' },
+    'CUSA02762': { key: 'CUSA02762', display: 'Divinity : Original Sin Enhanced Edition' },
+    'CUSA02819': { key: 'CUSA02902', display: 'Tom Clancy\'s Ghost Recon Wildlands' },
+    'CUSA02821': { key: 'CUSA02902', display: 'Tom Clancy\'s Ghost Recon Wildlands' },
+    'CUSA02871': { key: 'CUSA02871', display: 'Shadow of the Beast' },
+    'CUSA02882': { key: 'CUSA03178', display: 'Resident Evil: Origins Collection' },
+    'CUSA02902': { key: 'CUSA02902', display: 'Tom Clancy\'s Ghost Recon Wildlands' },
+    'CUSA02927': { key: 'CUSA02927', display: 'Rogue Aces' },
+    'CUSA02961': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA02962': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA02976': { key: 'CUSA02976', display: 'HITMAN' },
+    'CUSA02980': { key: 'CUSA02980', display: 'Borderlands THC: Borderlands Pre-Sequel' },
+    'CUSA03005': { key: 'CUSA03005', display: 'Call of Duty: Black Ops III' },
+    'CUSA03014': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA03041': { key: 'CUSA03041', display: 'Red Dead Redemption 2' },
+    'CUSA03051': { key: 'CUSA03051', display: 'Guns, Gore and Cannoli' },
+    'CUSA03109': { key: 'CUSA03109', display: 'UMBRELLA CORPS' },
+    'CUSA03168': { key: 'CUSA03168', display: 'Bombing Busters' },
+    'CUSA03173': { key: 'CUSA03173', display: 'Bloodborne' },
+    'CUSA03178': { key: 'CUSA03178', display: 'Resident Evil: Origins Collection' },
+    'CUSA03185': { key: 'CUSA03185', display: 'DIGIMON STORY CYBER SLEUTH' },
+    'CUSA03245': { key: 'CUSA03528', display: 'Deadpool' },
+    'CUSA03263': { key: 'CUSA03263', display: 'Mount & Blade: Warband' },
+    'CUSA03290': { key: 'CUSA03290', display: 'Dead Island: Riptide - Definitive Edition' },
+    'CUSA03291': { key: 'CUSA03291', display: 'Dead Island - Definitive Edition' },
+    'CUSA03309': { key: 'CUSA03309', display: 'Far Cry Primal' },
+    'CUSA03370': { key: 'CUSA01714', display: 'GOD EATER 2 RAGE BURST' },
+    'CUSA03440': { key: 'CUSA03440', display: 'Assassin’s Creed Chronicles: Trilogy Pack' },
+    'CUSA03446': { key: 'CUSA03455', display: '7 Days to Die' },
+    'CUSA03448': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA03450': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA03455': { key: 'CUSA03455', display: '7 Days to Die' },
+    'CUSA03468': { key: 'CUSA03468', display: 'Vampyr' },
+    'CUSA03498': { key: 'CUSA03498', display: 'RESIDENT EVIL UMBRELLA CORPS' },
+    'CUSA03522': { key: 'CUSA03522', display: 'Call of Duty: Modern Warfare Remastered' },
+    'CUSA03525': { key: 'CUSA03525', display: 'GOD EATER RESURRECTION' },
+    'CUSA03528': { key: 'CUSA03528', display: 'Deadpool' },
+    'CUSA03535': { key: 'CUSA03535', display: 'ZOMBI' },
+    'CUSA03551': { key: 'CUSA03551', display: 'Bully' },
+    'CUSA03603': { key: 'CUSA04806', display: 'Dishonored 2' },
+    'CUSA03604': { key: 'CUSA04806', display: 'Dishonored 2' },
+    'CUSA03613': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA03617': { key: 'CUSA03617', display: 'Mafia III' },
+    'CUSA03679': { key: 'CUSA03679', display: 'Mortal Kombat XL' },
+    'CUSA03694': { key: 'CUSA08060', display: 'Gravity Rush 2' },
+    'CUSA03698': { key: 'CUSA03698', display: 'caladrius-Blaze' },
+    'CUSA03701': { key: 'CUSA02962', display: 'Fallout 4' },
+    'CUSA03778': { key: 'CUSA03778', display: 'Shadow Blade Reload' },
+    'CUSA03803': { key: 'CUSA03803', display: 'UP4133-CUSA03803_00-THETECHNOMANCER0' },
+    'CUSA03818': { key: 'CUSA03051', display: 'Guns, Gore and Cannoli' },
+    'CUSA03824': { key: 'CUSA03824', display: 'The Technomancer' },
+    'CUSA03840': { key: 'CUSA03856', display: 'Resident Evil 6' },
+    'CUSA03842': { key: 'CUSA03842', display: 'Resident Evil 7 biohazard' },
+    'CUSA03856': { key: 'CUSA03856', display: 'Resident Evil 6' },
+    'CUSA03877': { key: 'CUSA03877', display: 'Styx: Shards of Darkness' },
+    'CUSA03946': { key: 'CUSA03991', display: 'Dying Light' },
+    'CUSA03952': { key: 'CUSA03952', display: 'No Mans Sky' },
+    'CUSA03977': { key: 'CUSA03991', display: 'Dying Light' },
+    'CUSA03979': { key: 'CUSA03979', display: 'BioShock : The Collection' },
+    'CUSA03980': { key: 'CUSA03980', display: 'BioShock Infinite: The Collection' },
+    'CUSA03991': { key: 'CUSA03991', display: 'Dying Light' },
+    'CUSA04013': { key: 'CUSA04027', display: 'Titanfall 2' },
+    'CUSA04027': { key: 'CUSA04027', display: 'Titanfall 2' },
+    'CUSA04099': { key: 'CUSA04099', display: 'Sniper Elite 4' },
+    'CUSA04220': { key: 'CUSA04099', display: 'Sniper Elite 4' },
+    'CUSA04250': { key: 'CUSA04250', display: 'Aegis of Earth: Protonovus Assault' },
+    'CUSA04273': { key: 'CUSA04273', display: 'Dead Rising 2: Off The Record' },
+    'CUSA04294': { key: 'CUSA04295', display: 'Watch_Dogs 2' },
+    'CUSA04295': { key: 'CUSA04295', display: 'Watch_Dogs 2' },
+    'CUSA04303': { key: 'CUSA04303', display: 'The Incredible Adventures of Van Helsing' },
+    'CUSA04312': { key: 'CUSA04312', display: 'Ghostbusters' },
+    'CUSA04313': { key: 'CUSA04313', display: 'Dead Rising 2' },
+    'CUSA04317': { key: 'CUSA04317', display: 'ELEX' },
+    'CUSA04402': { key: 'CUSA04402', display: 'Middle-earth: Shadow of War' },
+    'CUSA04411': { key: 'CUSA04411', display: 'Sky Force Anniversary' },
+    'CUSA04437': { key: 'CUSA04437', display: 'Resident Evil 5' },
+    'CUSA04445': { key: 'CUSA04411', display: 'Sky Force Anniversary' },
+    'CUSA04480': { key: 'CUSA04551', display: 'NieR:Automata' },
+    'CUSA04482': { key: 'CUSA06560', display: 'Prey' },
+    'CUSA04493': { key: 'CUSA06560', display: 'Prey' },
+    'CUSA04513': { key: 'CUSA04513', display: 'Dead Rising 1' },
+    'CUSA04551': { key: 'CUSA04551', display: 'NieR:Automata' },
+    'CUSA04555': { key: 'CUSA04555', display: 'DEAD OR ALIVE Xtreme 3 Fortune' },
+    'CUSA04647': { key: 'CUSA04647', display: 'WORLD OF FINAL FANTASY' },
+    'CUSA04692': { key: 'CUSA04692', display: '10 Second Ninja X' },
+    'CUSA04713': { key: 'CUSA04713', display: 'Super Robot Wars OG The Moon Dwellers' },
+    'CUSA04762': { key: 'CUSA05369', display: 'Call of Duty: Infinite Warfare' },
+    'CUSA04768': { key: 'CUSA04768', display: 'South Park: The Stick of Truth' },
+    'CUSA04788': { key: 'CUSA04788', display: 'Marvel Ultimate Alliance 2' },
+    'CUSA04802': { key: 'CUSA04802', display: '2Dark' },
+    'CUSA04806': { key: 'CUSA04806', display: 'Dishonored 2' },
+    'CUSA04841': { key: 'CUSA04841', display: 'No Man\'s Sky' },
+    'CUSA04849': { key: 'CUSA04849', display: 'The Surge' },
+    'CUSA04853': { key: 'CUSA04853', display: 'Fairy Fencer F ADVENT DARK FORCE' },
+    'CUSA04854': { key: 'CUSA04854', display: 'Sniper 3' },
+    'CUSA04868': { key: 'CUSA04868', display: 'Sniper Ghost Warrior 3' },
+    'CUSA04885': { key: 'CUSA04885', display: 'Resident Evil 4' },
+    'CUSA04893': { key: 'CUSA04893', display: 'Assassin\'s Creed: The Ezio Collection' },
+    'CUSA04943': { key: 'CUSA08060', display: 'Gravity Rush 2' },
+    'CUSA05008': { key: 'CUSA04893', display: 'Assassin\'s Creed: The Ezio Collection' },
+    'CUSA05011': { key: 'CUSA05011', display: 'Monster Boy and the Cursed Kingdom' },
+    'CUSA05033': { key: 'CUSA05033', display: 'SWORD ART ONLINE: HOLLOW REALIZATION' },
+    'CUSA05040': { key: 'CUSA05040', display: 'NBA 2K17' },
+    'CUSA05049': { key: 'CUSA05049', display: 'UP2591-CUSA05049_00-SOTD000000000000' },
+    'CUSA05083': { key: 'CUSA05083', display: 'Odin Sphere Leifthrasir' },
+    'CUSA05088': { key: 'CUSA05088', display: 'Dragon Ball Xenoverse 2' },
+    'CUSA05133': { key: 'CUSA05133', display: 'YAKUZA 0' },
+    'CUSA05258': { key: 'CUSA05258', display: 'Tales of Berseria' },
+    'CUSA05282': { key: 'CUSA05369', display: 'Call of Duty: Infinite Warfare' },
+    'CUSA05347': { key: 'CUSA05347', display: 'Darksiders Warmastered Edition' },
+    'CUSA05350': { key: 'CUSA05088', display: 'Dragon Ball Xenoverse 2' },
+    'CUSA05369': { key: 'CUSA05369', display: 'Call of Duty: Infinite Warfare' },
+    'CUSA05392': { key: 'CUSA05392', display: 'Digimon World: Next Order' },
+    'CUSA05486': { key: 'CUSA05486', display: 'Skyrim: The Elder Scrolls V' },
+    'CUSA05531': { key: 'CUSA05531', display: 'FINAL FANTASY Ⅻ THE ZODIAC AGE' },
+    'CUSA05532': { key: 'CUSA05531', display: 'FINAL FANTASY Ⅻ THE ZODIAC AGE' },
+    'CUSA05571': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05572': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05573': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05574': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05588': { key: 'CUSA05588', display: 'Nex Machina' },
+    'CUSA05597': { key: 'CUSA01154', display: 'Metal Gear Solid V: The Phantom Pain' },
+    'CUSA05610': { key: 'CUSA01154', display: 'Metal Gear Solid V: The Phantom Pain' },
+    'CUSA05625': { key: 'CUSA05625', display: 'Assassin\'s Creed Origins' },
+    'CUSA05636': { key: 'CUSA05636', display: 'ACE COMBAT 7: SKIES UNKNOWN' },
+    'CUSA05644': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05648': { key: 'CUSA05648', display: 'Shadow Warrior 2' },
+    'CUSA05662': { key: 'CUSA01154', display: 'Metal Gear Solid V: The Phantom Pain' },
+    'CUSA05674': { key: 'CUSA05674', display: 'SONIC FORCES' },
+    'CUSA05716': { key: 'CUSA05716', display: 'Rise of the Tomb Raider' },
+    'CUSA05720': { key: 'CUSA05720', display: 'Rise of the Tomb Raider 20 Year Celebration' },
+    'CUSA05725': { key: 'CUSA05644', display: 'The Witcher 3: Wild Hunt' },
+    'CUSA05749': { key: 'CUSA05749', display: 'STAR WARS Battlefront II' },
+    'CUSA05786': { key: 'CUSA05933', display: 'KINGDOM HEARTS HD 1.5+2.5 ReMIX' },
+    'CUSA05787': { key: 'CUSA05787', display: 'KINGDOM HEARTS 0.2 Birth by Sleep - A Fragmentary Passage -' },
+    'CUSA05796': { key: 'CUSA05796', display: 'UP2346-CUSA05796_00-RIMEGAME01NA0001' },
+    'CUSA05797': { key: 'CUSA05797', display: 'Toukiden 2' },
+    'CUSA05847': { key: 'CUSA05904', display: 'Far Cry 5' },
+    'CUSA05848': { key: 'CUSA05848', display: 'Far CryВ 5' },
+    'CUSA05855': { key: 'CUSA05625', display: 'Assassin\'s Creed Origins' },
+    'CUSA05904': { key: 'CUSA05904', display: 'Far Cry 5' },
+    'CUSA05906': { key: 'CUSA05906', display: 'Pang Adventures' },
+    'CUSA05933': { key: 'CUSA05933', display: 'KINGDOM HEARTS HD 1.5+2.5 ReMIX' },
+    'CUSA05935': { key: 'CUSA05954', display: 'LEGO Harry Potter: Years 1-4' },
+    'CUSA05951': { key: 'CUSA05951', display: 'Super StardustUltra VR' },
+    'CUSA05954': { key: 'CUSA05954', display: 'LEGO Harry Potter: Years 1-4' },
+    'CUSA05957': { key: 'CUSA05957', display: 'A Pixel Story' },
+    'CUSA05969': { key: 'CUSA05969', display: 'COD: World War II (MP/ZM)' },
+    'CUSA05986': { key: 'CUSA05986', display: 'Need for Speed Payback' },
+    'CUSA05987': { key: 'CUSA05987', display: 'EP0149-CUSA05987_00-DEATHSGAMBITEU00' },
+    'CUSA06014': { key: 'CUSA06014', display: 'Tekken 7' },
+    'CUSA06027': { key: 'CUSA06027', display: 'Monster Hunter World: Iceborne' },
+    'CUSA06052': { key: 'CUSA06052', display: 'Rogue Stormers' },
+    'CUSA06124': { key: 'CUSA06124', display: 'SUPER ROBOT WARS V' },
+    'CUSA06164': { key: 'CUSA06164', display: 'The Evil Within 2' },
+    'CUSA06166': { key: 'CUSA06164', display: 'The Evil Within 2' },
+    'CUSA06212': { key: 'CUSA06212', display: 'Resident Evil: Revelations' },
+    'CUSA06213': { key: 'CUSA06213', display: 'UP1195-CUSA06213_00-THEDEERGODPS4000' },
+    'CUSA06291': { key: 'CUSA06291', display: 'Naruto Shippuden: Ultimate Ninja Storm 4' },
+    'CUSA06313': { key: 'CUSA18886', display: 'Sackboy: A Big Adventure' },
+    'CUSA06314': { key: 'CUSA06212', display: 'Resident Evil: Revelations' },
+    'CUSA06321': { key: 'CUSA06321', display: 'NBA Live 18' },
+    'CUSA06381': { key: 'CUSA06291', display: 'Naruto Shippuden: Ultimate Ninja Storm 4' },
+    'CUSA06387': { key: 'CUSA06387', display: 'MLB The Show 17' },
+    'CUSA06400': { key: 'CUSA06400', display: 'MARVEL VS. CAPCOM: INFINITE' },
+    'CUSA06407': { key: 'CUSA06548', display: 'Cities: Skylines' },
+    'CUSA06423': { key: 'CUSA06423', display: 'Xuan Yuan Sword: the Gate of Firmament' },
+    'CUSA06447': { key: 'CUSA06447', display: 'Euro Fishing' },
+    'CUSA06511': { key: 'CUSA06511', display: 'LEGO CITY UNDERCOVER' },
+    'CUSA06545': { key: 'CUSA06545', display: '[PROTOTYPE BIOHAZARD BUNDLE]' },
+    'CUSA06548': { key: 'CUSA06548', display: 'Cities: Skylines' },
+    'CUSA06560': { key: 'CUSA06560', display: 'Prey' },
+    'CUSA06633': { key: 'CUSA06633', display: 'Outlast 2' },
+    'CUSA06676': { key: 'CUSA06782', display: 'ARK: Survival Evolved' },
+    'CUSA06782': { key: 'CUSA06782', display: 'ARK: Survival Evolved' },
+    'CUSA06810': { key: 'CUSA06810', display: 'Valkyria Revolution' },
+    'CUSA06880': { key: 'CUSA06880', display: 'Pillars of Eternity: Complete Edition' },
+    'CUSA06894': { key: 'CUSA06894', display: 'Superbeat: Xonic' },
+    'CUSA06924': { key: 'CUSA06924', display: 'Alchemic Jousts' },
+    'CUSA06978': { key: 'CUSA06978', display: 'Tokyo Xanadu eX+' },
+    'CUSA06997': { key: 'CUSA06997', display: 'Yakuza Kiwami' },
+    'CUSA07000': { key: 'CUSA07000', display: 'Indivisible' },
+    'CUSA07006': { key: 'CUSA07006', display: 'how to surrvive 2' },
+    'CUSA07010': { key: 'CUSA07010', display: 'Sonic Mania' },
+    'CUSA07023': { key: 'CUSA07010', display: 'Sonic Mania' },
+    'CUSA07052': { key: 'CUSA07052', display: 'FINAL FANTASY VII REMAKE' },
+    'CUSA07113': { key: 'CUSA07113', display: 'Nioh' },
+    'CUSA07123': { key: 'CUSA07113', display: 'Nioh' },
+    'CUSA07143': { key: 'CUSA07143', display: 'Bulletstorm: Full Clip Edition' },
+    'CUSA07187': { key: 'CUSA07052', display: 'FINAL FANTASY VII REMAKE' },
+    'CUSA07188': { key: 'CUSA07143', display: 'Bulletstorm: Full Clip Edition' },
+    'CUSA07202': { key: 'CUSA05636', display: 'ACE COMBAT 7: SKIES UNKNOWN' },
+    'CUSA07211': { key: 'CUSA07052', display: 'FINAL FANTASY VII REMAKE' },
+    'CUSA07254': { key: 'CUSA07254', display: 'Stellaris: Console Edition' },
+    'CUSA07282': { key: 'CUSA07282', display: 'Sundered' },
+    'CUSA07340': { key: 'CUSA07340', display: 'Dragons Dogma: Dark Arisen' },
+    'CUSA07345': { key: 'CUSA07345', display: 'Ni no Kuni II: Revenant Kingdom' },
+    'CUSA07377': { key: 'CUSA07384', display: 'Wolfenstein II: The New Colossus' },
+    'CUSA07384': { key: 'CUSA07384', display: 'Wolfenstein II: The New Colossus' },
+    'CUSA07399': { key: 'CUSA07399', display: 'Crash Bandicoot N Sane Trilogy' },
+    'CUSA07408': { key: 'CUSA07413', display: 'God of War' },
+    'CUSA07410': { key: 'CUSA07413', display: 'God of War' },
+    'CUSA07411': { key: 'CUSA07413', display: 'God of War' },
+    'CUSA07412': { key: 'CUSA07413', display: 'God of War' },
+    'CUSA07413': { key: 'CUSA07413', display: 'God of War' },
+    'CUSA07439': { key: 'CUSA07439', display: 'DARK SOULS III: The Fire Fades Edition' },
+    'CUSA07527': { key: 'CUSA07527', display: 'Hellblade: Senuas Sacrifice' },
+    'CUSA07559': { key: 'CUSA07691', display: '.hack//G.U. Last Recode' },
+    'CUSA07615': { key: 'CUSA06997', display: 'Yakuza Kiwami' },
+    'CUSA07651': { key: 'CUSA07651', display: 'GUNDAM BREAKER 3 BREAK EDITION' },
+    'CUSA07670': { key: 'CUSA07670', display: 'Knack 2' },
+    'CUSA07691': { key: 'CUSA07691', display: '.hack//G.U. Last Recode' },
+    'CUSA07708': { key: 'CUSA07708', display: 'Monster Hunter:World' },
+    'CUSA07712': { key: 'CUSA07712', display: 'Outlast' },
+    'CUSA07713': { key: 'CUSA06027', display: 'Monster Hunter World: Iceborne' },
+    'CUSA07737': { key: 'CUSA07737', display: 'Uncharted: The Lost Legacy' },
+    'CUSA07742': { key: 'CUSA07742', display: 'EP4467-CUSA07742_00-OUTLASTDISK00000' },
+    'CUSA07820': { key: 'CUSA07820', display: 'The Last of Us Part II' },
+    'CUSA07823': { key: 'CUSA07823', display: 'Borderlands 3' },
+    'CUSA07875': { key: 'CUSA07737', display: 'Uncharted: The Lost Legacy' },
+    'CUSA07904': { key: 'CUSA09249', display: 'Call of Duty: Modern Warfare 2 Campaign Remastered' },
+    'CUSA07905': { key: 'CUSA07905', display: 'Strange Brigade' },
+    'CUSA07953': { key: 'CUSA07953', display: 'Bloodstained: Ritual of the Night' },
+    'CUSA07994': { key: 'CUSA07994', display: 'Fifa 18' },
+    'CUSA08014': { key: 'CUSA07670', display: 'Knack 2' },
+    'CUSA08025': { key: 'CUSA07823', display: 'Borderlands 3' },
+    'CUSA08055': { key: 'CUSA08055', display: 'Aven Colony' },
+    'CUSA08060': { key: 'CUSA08060', display: 'Gravity Rush 2' },
+    'CUSA08065': { key: 'CUSA08065', display: 'Bloons TD 5' },
+    'CUSA08116': { key: 'CUSA08116', display: 'Final Fantasy XII The Zodiac Age 最终幻想12 黄道纪元' },
+    'CUSA08126': { key: 'CUSA08126', display: 'Oddworld Soulstorm Enhanced Edition' },
+    'CUSA08154': { key: 'CUSA08154', display: 'Tropico 6' },
+    'CUSA08161': { key: 'CUSA08216', display: 'Devil May Cry 5' },
+    'CUSA08216': { key: 'CUSA08216', display: 'Devil May Cry 5' },
+    'CUSA08355': { key: 'CUSA08355', display: 'Shenmue' },
+    'CUSA08366': { key: 'CUSA08366', display: 'Titan Quest' },
+    'CUSA08393': { key: 'CUSA05625', display: 'Assassin\'s Creed Origins' },
+    'CUSA08413': { key: 'CUSA08413', display: 'Guns Gore and Cannoli 2' },
+    'CUSA08418': { key: 'CUSA08418', display: 'Okami' },
+    'CUSA08495': { key: 'CUSA08495', display: 'Dark Souls: Remastered' },
+    'CUSA08500': { key: 'CUSA08500', display: 'NBA 2K18' },
+    'CUSA08518': { key: 'CUSA18600', display: 'Dragon Quest XI: Echoes of an Elusive Age' },
+    'CUSA08519': { key: 'CUSA03041', display: 'Red Dead Redemption 2' },
+    'CUSA08543': { key: 'CUSA08543', display: 'Bloody Zombies' },
+    'CUSA08558': { key: 'CUSA08558', display: 'Dead Rising 4: Frank\'s Big Package' },
+    'CUSA08570': { key: 'CUSA08570', display: 'Ys VIII -Lacrimosa of DANA-' },
+    'CUSA08602': { key: 'CUSA08602', display: 'Call of Duty WWII (Campaign)' },
+    'CUSA08661': { key: 'CUSA08661', display: 'theHunter: Call of the Wild' },
+    'CUSA08670': { key: 'CUSA08724', display: 'Battlefield V' },
+    'CUSA08692': { key: 'CUSA08495', display: 'Dark Souls: Remastered' },
+    'CUSA08724': { key: 'CUSA08724', display: 'Battlefield V' },
+    'CUSA08778': { key: 'CUSA08778', display: 'EARTH DEFENSE FORCE: IRON RAIN' },
+    'CUSA08779': { key: 'CUSA08779', display: 'Dishonored: Death of the Outsider' },
+    'CUSA08798': { key: 'CUSA08798', display: 'Darksiders III' },
+    'CUSA08809': { key: 'CUSA08809', display: 'Shadow of the Colossus' },
+    'CUSA08829': { key: 'CUSA08829', display: 'Call of Duty: Modern Warfare' },
+    'CUSA08877': { key: 'CUSA08877', display: 'FINAL FANTASY IX' },
+    'CUSA08948': { key: 'CUSA08948', display: 'Attack on Titan 2' },
+    'CUSA08966': { key: 'CUSA09175', display: 'Days Gone' },
+    'CUSA08974': { key: 'CUSA06164', display: 'The Evil Within 2' },
+    'CUSA09147': { key: 'CUSA09147', display: 'The Mummy Demastered' },
+    'CUSA09171': { key: 'CUSA09171', display: 'RESIDENT EVIL 2' },
+    'CUSA09175': { key: 'CUSA09175', display: 'Days Gone' },
+    'CUSA09176': { key: 'CUSA09175', display: 'Days Gone' },
+    'CUSA09193': { key: 'CUSA14168', display: 'Resident Evil 3' },
+    'CUSA09216': { key: 'CUSA09216', display: 'The Sims 4' },
+    'CUSA09243': { key: 'CUSA07345', display: 'Ni no Kuni II: Revenant Kingdom' },
+    'CUSA09249': { key: 'CUSA09249', display: 'Call of Duty: Modern Warfare 2 Campaign Remastered' },
+    'CUSA09254': { key: 'CUSA09254', display: 'Just Cause 4' },
+    'CUSA09263': { key: 'CUSA09263', display: 'Devil May Cry HD Collection' },
+    'CUSA09264': { key: 'CUSA09254', display: 'Just Cause 4' },
+    'CUSA09303': { key: 'CUSA09303', display: 'Assassin\'s Creed Odyssey' },
+    'CUSA09311': { key: 'CUSA09303', display: 'Assassin\'s Creed Odyssey' },
+    'CUSA09406': { key: 'CUSA09406', display: 'We Happy Few' },
+    'CUSA09407': { key: 'CUSA09263', display: 'Devil May Cry HD Collection' },
+    'CUSA09415': { key: 'CUSA09415', display: 'Undertale' },
+    'CUSA09421': { key: 'CUSA09421', display: 'Sky Force Reloaded' },
+    'CUSA09435': { key: 'CUSA09435', display: 'Trials Rising(TM)' },
+    'CUSA09450': { key: 'CUSA09450', display: 'MLB The Show 18' },
+    'CUSA09473': { key: 'CUSA03842', display: 'Resident Evil 7 biohazard' },
+    'CUSA09499': { key: 'CUSA09499', display: 'Cat Quest' },
+    'CUSA09537': { key: 'CUSA09537', display: 'Secret of Mana' },
+    'CUSA09554': { key: 'CUSA06027', display: 'Monster Hunter World: Iceborne' },
+    'CUSA09564': { key: 'CUSA07737', display: 'Uncharted: The Lost Legacy' },
+    'CUSA09643': { key: 'CUSA03842', display: 'Resident Evil 7 biohazard' },
+    'CUSA09660': { key: 'CUSA09660', display: 'YAKUZA 6: The Song of Life' },
+    'CUSA09682': { key: 'CUSA09682', display: 'Kingdom Come: Deliverance' },
+    'CUSA09690': { key: 'CUSA09690', display: 'TheLongDark' },
+    'CUSA09848': { key: 'CUSA09848', display: 'Biomutant' },
+    'CUSA09869': { key: 'CUSA09869', display: 'Trine 4: The Nightmare Prince' },
+    'CUSA09897': { key: 'CUSA09897', display: 'LEGO The Incredibles' },
+    'CUSA09910': { key: 'CUSA09910', display: 'Nights of Azure 2: Bride of the New Moon' },
+    'CUSA09919': { key: 'CUSA09919', display: 'EP2333-CUSA09919_00-OUTERWILDSSIEE00' },
+    'CUSA09923': { key: 'CUSA09923', display: 'Digimon Story: Cyber Sleuth - Hackers Memory' },
+    'CUSA10123': { key: 'CUSA10123', display: 'Assassins Creed Rogue Remastered' },
+    'CUSA10126': { key: 'CUSA07113', display: 'Nioh' },
+    'CUSA10161': { key: 'CUSA10161', display: 'Immortal: Unchained' },
+    'CUSA10195': { key: 'CUSA10195', display: 'The Binding of Isaac Afterbirth Plus' },
+    'CUSA10211': { key: 'CUSA10211', display: 'Horizon Zero Dawn' },
+    'CUSA10212': { key: 'CUSA10212', display: 'Horizon Zero Dawn: Complete Edition' },
+    'CUSA10213': { key: 'CUSA10212', display: 'Horizon Zero Dawn: Complete Edition' },
+    'CUSA10227': { key: 'CUSA10227', display: 'Torchlight III' },
+    'CUSA10237': { key: 'CUSA10212', display: 'Horizon Zero Dawn: Complete Edition' },
+    'CUSA10246': { key: 'CUSA10246', display: 'CODE VEIN' },
+    'CUSA10249': { key: 'CUSA07820', display: 'The Last of Us Part II' },
+    'CUSA10300': { key: 'CUSA10300', display: 'RAGE2' },
+    'CUSA10326': { key: 'CUSA29007', display: 'Far Cry 3' },
+    'CUSA10421': { key: 'CUSA10421', display: 'DYNASTY WARRIORS 9' },
+    'CUSA10454': { key: 'CUSA10454', display: 'Dragons Crown Pro' },
+    'CUSA10455': { key: 'CUSA10455', display: 'Borderlands GOTY' },
+    'CUSA10507': { key: 'CUSA18442', display: 'Remnant: From the Ashes' },
+    'CUSA10587': { key: 'CUSA10587', display: 'SUPER ROBOT WARS X' },
+    'CUSA10592': { key: 'CUSA10592', display: 'Heroine Anthem Zero Episode 1' },
+    'CUSA10633': { key: 'CUSA10633', display: 'Valkyria Chronicles 4' },
+    'CUSA10667': { key: 'CUSA10667', display: 'SUPER BOMBERMAN R' },
+    'CUSA10688': { key: 'CUSA10688', display: 'Injustice 2: Legendary Edition' },
+    'CUSA10706': { key: 'CUSA10706', display: 'YAKUZA KIWAMI 2' },
+    'CUSA10738': { key: 'CUSA10738', display: 'Mega Man 11' },
+    'CUSA10811': { key: 'CUSA10811', display: 'Graveyard Keeper' },
+    'CUSA10812': { key: 'CUSA10812', display: 'A Plague Tale: Innocence' },
+    'CUSA10851': { key: 'CUSA10851', display: 'Burnout Paradise Remastered' },
+    'CUSA10853': { key: 'CUSA10853', display: 'Outward' },
+    'CUSA10859': { key: 'CUSA10859', display: 'Adventure Time: Pirates of the Enchiridion' },
+    'CUSA10872': { key: 'CUSA10872', display: 'Shadow of the Tomb Raider' },
+    'CUSA10882': { key: 'CUSA10882', display: 'Shining Resonance Refrain' },
+    'CUSA11047': { key: 'CUSA11047', display: 'Song of Memories' },
+    'CUSA11095': { key: 'CUSA11095', display: 'Paw Patrol: On a Roll!' },
+    'CUSA11100': { key: 'CUSA11100', display: 'Call of Duty: Black Ops 4' },
+    'CUSA11112': { key: 'CUSA11112', display: 'Desperados III' },
+    'CUSA11115': { key: 'CUSA11115', display: 'Team Sonic Racing' },
+    'CUSA11147': { key: 'CUSA11147', display: '鬼武者' },
+    'CUSA11217': { key: 'CUSA11217', display: 'SINNER: Sacrifice for Redemption' },
+    'CUSA11229': { key: 'CUSA11229', display: 'LEFT ALIVE' },
+    'CUSA11253': { key: 'CUSA11253', display: 'Dead Cells' },
+    'CUSA11260': { key: 'CUSA12605', display: 'Death Stranding' },
+    'CUSA11275': { key: 'CUSA11275', display: 'Horizon Chase Turbo' },
+    'CUSA11318': { key: 'CUSA11112', display: 'Desperados III' },
+    'CUSA11379': { key: 'CUSA11395', display: 'Mortal Kombat 11' },
+    'CUSA11395': { key: 'CUSA11395', display: 'Mortal Kombat 11' },
+    'CUSA11407': { key: 'CUSA11408', display: 'Metro Exodus' },
+    'CUSA11408': { key: 'CUSA11408', display: 'Metro Exodus' },
+    'CUSA11454': { key: 'CUSA11454', display: 'Control' },
+    'CUSA11456': { key: 'CUSA11456', display: 'Ghost of Tsushima' },
+    'CUSA11485': { key: 'CUSA11485', display: 'Fade to Silence' },
+    'CUSA11560': { key: 'CUSA11560', display: 'Assassins Creed III Remastered' },
+    'CUSA11603': { key: 'CUSA11603', display: 'Shikhondo Soul Eater' },
+    'CUSA11638': { key: 'CUSA11638', display: 'JUMP FORCE' },
+    'CUSA11650': { key: 'CUSA11650', display: 'Slime Rancher' },
+    'CUSA11687': { key: 'CUSA11687', display: 'Extinction' },
+    'CUSA11712': { key: 'CUSA11712', display: 'SENRAN KAGURA Burst Re:Newal' },
+    'CUSA11758': { key: 'CUSA11758', display: 'UP2746-CUSA11758_00-SHAQFURETAIL2018' },
+    'CUSA11846': { key: 'CUSA11846', display: 'THE LAST REMNANT Remastered' },
+    'CUSA11898': { key: 'CUSA11898', display: 'Divinity: Original Sin 2 - Definitive Edition' },
+    'CUSA11926': { key: 'CUSA11926', display: 'Timespinner' },
+    'CUSA11941': { key: 'CUSA11941', display: 'Starlit Adventures' },
+    'CUSA11993': { key: 'CUSA11994', display: 'Marvel\'s Spider-Man' },
+    'CUSA11994': { key: 'CUSA11994', display: 'Marvel\'s Spider-Man' },
+    'CUSA11995': { key: 'CUSA11994', display: 'Marvel\'s Spider-Man' },
+    'CUSA12025': { key: 'CUSA12025', display: 'KINGDOM HEARTS Ⅲ' },
+    'CUSA12042': { key: 'CUSA09303', display: 'Assassin\'s Creed Odyssey' },
+    'CUSA12047': { key: 'CUSA13801', display: 'Sekiro: Shadows Die Twice' },
+    'CUSA12116': { key: 'CUSA12153', display: 'DEAD OR ALIVE 6' },
+    'CUSA12153': { key: 'CUSA12153', display: 'DEAD OR ALIVE 6' },
+    'CUSA12209': { key: 'CUSA12209', display: 'Truck Driver' },
+    'CUSA12287': { key: 'CUSA12287', display: 'Tales of Vesperia: Definitive Edition' },
+    'CUSA12289': { key: 'CUSA12289', display: 'Shenmue III' },
+    'CUSA12351': { key: 'CUSA12351', display: 'Sniper Elite V2 Remastered' },
+    'CUSA12365': { key: 'CUSA12365', display: 'The Legend of Heroes: Trails of Cold Steel' },
+    'CUSA12378': { key: 'CUSA12378', display: 'Hungry Shark World' },
+    'CUSA12398': { key: 'CUSA12398', display: 'The Forest' },
+    'CUSA12401': { key: 'CUSA12401', display: 'HITMAN 2' },
+    'CUSA12433': { key: 'CUSA11100', display: 'Call of Duty: Black Ops 4' },
+    'CUSA12443': { key: 'CUSA11100', display: 'Call of Duty: Black Ops 4' },
+    'CUSA12458': { key: 'CUSA12458', display: 'Earthfall' },
+    'CUSA12476': { key: 'CUSA12476', display: 'NBA 2K19' },
+    'CUSA12529': { key: 'CUSA12529', display: 'STAR WARS Jedi: Fallen Order' },
+    'CUSA12545': { key: 'CUSA12545', display: 'Little Dragons Café' },
+    'CUSA12555': { key: 'CUSA12555', display: 'Dying Light 2: Stay Human' },
+    'CUSA12566': { key: 'CUSA12566', display: 'The Legend of Heroes: Trails of Cold Steel II' },
+    'CUSA12567': { key: 'CUSA12567', display: 'The Surge 2' },
+    'CUSA12584': { key: 'CUSA12555', display: 'Dying Light 2: Stay Human' },
+    'CUSA12596': { key: 'CUSA12596', display: 'Zombie Army 4: Dead War' },
+    'CUSA12605': { key: 'CUSA12605', display: 'Death Stranding' },
+    'CUSA12648': { key: 'CUSA01615', display: 'FINAL FANTASY XV' },
+    'CUSA12650': { key: 'CUSA12650', display: 'Hitman Absolution HD' },
+    'CUSA12771': { key: 'CUSA12771', display: 'Hogwarts Legacy' },
+    'CUSA12779': { key: 'CUSA12779', display: 'Little Nightmares II' },
+    'CUSA12781': { key: 'CUSA12781', display: 'Fist of the North Star: Lost Paradise' },
+    'CUSA12824': { key: 'CUSA12771', display: 'Hogwarts Legacy' },
+    'CUSA12860': { key: 'CUSA12860', display: 'Slaps And Beans' },
+    'CUSA12943': { key: 'CUSA12943', display: 'The Hong Kong Massacre' },
+    'CUSA12979': { key: 'CUSA12979', display: 'Darksiders Genesis' },
+    'CUSA12982': { key: 'SCUS94227', display: 'MediEvil' },
+    'CUSA13020': { key: 'CUSA13020', display: 'Road Redemption' },
+    'CUSA13034': { key: 'CUSA13115', display: 'Watch Dogs: Legion' },
+    'CUSA13079': { key: 'CUSA13079', display: 'Ni no Kuni Wrath of the White Witch Remastered' },
+    'CUSA13094': { key: 'CUSA13094', display: 'Wolfenstein: Youngblood' },
+    'CUSA13115': { key: 'CUSA13115', display: 'Watch Dogs: Legion' },
+    'CUSA13152': { key: 'CUSA13152', display: 'The Sinking City' },
+    'CUSA13197': { key: 'CUSA13197', display: 'Judgment' },
+    'CUSA13228': { key: 'CUSA13228', display: 'Gene Rain : Wind Tower' },
+    'CUSA13233': { key: 'CUSA11456', display: 'Ghost of Tsushima' },
+    'CUSA13248': { key: 'CUSA13248', display: 'Ancestors: The Humankind Odyssey' },
+    'CUSA13262': { key: 'CUSA13262', display: 'Ary and the Secret of Seasons' },
+    'CUSA13275': { key: 'CUSA13338', display: 'DOOM Eternal' },
+    'CUSA13285': { key: 'CUSA13285', display: 'Hollow Knight' },
+    'CUSA13323': { key: 'CUSA11456', display: 'Ghost of Tsushima' },
+    'CUSA13338': { key: 'CUSA13338', display: 'DOOM Eternal' },
+    'CUSA13367': { key: 'CUSA13367', display: 'Asterix & Obelix XXL2' },
+    'CUSA13404': { key: 'CUSA13404', display: 'Fimbul' },
+    'CUSA13483': { key: 'CUSA13483', display: 'Farm Together' },
+    'CUSA13537': { key: 'CUSA13537', display: 'Hell Warders' },
+    'CUSA13612': { key: 'CUSA13612', display: 'Hitman: Blood Money HD' },
+    'CUSA13619': { key: 'CUSA13619', display: 'NBA 2K Playgrounds 2' },
+    'CUSA13689': { key: 'CUSA13689', display: 'The Outer Worlds' },
+    'CUSA13757': { key: 'CUSA13757', display: 'Narcos: Rise of the Cartels' },
+    'CUSA13794': { key: 'CUSA13794', display: 'LEGO Star Wars: The Skywalker Saga' },
+    'CUSA13801': { key: 'CUSA13801', display: 'Sekiro: Shadows Die Twice' },
+    'CUSA13830': { key: 'CUSA18442', display: 'Remnant: From the Ashes' },
+    'CUSA13885': { key: 'CUSA13917', display: 'Far Cry: New Dawn' },
+    'CUSA13910': { key: 'CUSA13910', display: 'Sekiro: Shadows Die Twice 只狼：影逝二度' },
+    'CUSA13917': { key: 'CUSA13917', display: 'Far Cry: New Dawn' },
+    'CUSA13930': { key: 'CUSA13930', display: 'World War Z: Aftermath' },
+    'CUSA13946': { key: 'CUSA13946', display: 'Borderlands 2 VR' },
+    'CUSA13967': { key: 'CUSA13967', display: 'Forager' },
+    'CUSA14000': { key: 'CUSA14000', display: 'Ghoulboy' },
+    'CUSA14020': { key: 'CUSA14020', display: 'Just Dance 2019 (Demo)' },
+    'CUSA14026': { key: 'CUSA14026', display: 'Marvel\'s Avengers' },
+    'CUSA14030': { key: 'CUSA14030', display: 'Marvels Avengers' },
+    'CUSA14046': { key: 'CUSA13930', display: 'World War Z: Aftermath' },
+    'CUSA14054': { key: 'CUSA14054', display: 'ONE PIECE WORLD SEEKER' },
+    'CUSA14123': { key: 'CUSA14168', display: 'Resident Evil 3' },
+    'CUSA14168': { key: 'CUSA14168', display: 'Resident Evil 3' },
+    'CUSA14209': { key: 'CUSA14209', display: 'EA SPORTS UFC 4' },
+    'CUSA14211': { key: 'CUSA14211', display: 'GreedFall' },
+    'CUSA14212': { key: 'CUSA14212', display: 'Generation Zero' },
+    'CUSA14275': { key: 'CUSA14275', display: 'Back 4 Blood' },
+    'CUSA14303': { key: 'CUSA14303', display: 'Legrand Legacy Tale of the Fatebounds' },
+    'CUSA14330': { key: 'CUSA14330', display: 'The Pathless' },
+    'CUSA14332': { key: 'CUSA14332', display: 'Ashen' },
+    'CUSA14409': { key: 'CUSA14409', display: 'Castle Crashers Remastered' },
+    'CUSA14451': { key: 'CUSA14451', display: 'Söldner-X 2: Final Prototype Definitive Edition' },
+    'CUSA14515': { key: 'CUSA14515', display: 'Gladiator: Blades of Fury' },
+    'CUSA14519': { key: 'CUSA14519', display: 'Maneater' },
+    'CUSA14538': { key: 'CUSA14519', display: 'Maneater' },
+    'CUSA14566': { key: 'CUSA14566', display: 'PC Building Simulator' },
+    'CUSA14614': { key: 'CUSA14614', display: '七龍珠Z 卡卡洛特' },
+    'CUSA14619': { key: 'CUSA14619', display: 'Sniper Ghost Warrior Contracts' },
+    'CUSA14637': { key: 'CUSA14637', display: 'Ultra Age' },
+    'CUSA14656': { key: 'CUSA14656', display: 'Blazing Chrome' },
+    'CUSA14683': { key: 'CUSA14683', display: 'The Ascent' },
+    'CUSA14835': { key: 'CUSA14835', display: 'DRAGON BALL Z: KAKAROT' },
+    'CUSA14889': { key: 'CUSA14889', display: 'Captain Tsubasa: Rise of New Champions' },
+    'CUSA14896': { key: 'CUSA14889', display: 'Captain Tsubasa: Rise of New Champions' },
+    'CUSA14898': { key: 'CUSA14898', display: 'SpongeBob SquarePants: Battle For Bikini Bottom - Rehydrated' },
+    'CUSA14910': { key: 'CUSA14910', display: 'Destroy All Humans!' },
+    'CUSA14925': { key: 'CUSA14925', display: 'Bus Simulator 21' },
+    'CUSA14936': { key: 'CUSA14936', display: 'EP4800-CUSA14936_00-0000111122223334' },
+    'CUSA15010': { key: 'CUSA24267', display: 'Call of Duty: Black Ops Cold War' },
+    'CUSA15027': { key: 'CUSA09175', display: 'Days Gone' },
+    'CUSA15089': { key: 'CUSA15089', display: 'STAR WARS: Squadrons' },
+    'CUSA15090': { key: 'CUSA15090', display: 'Need for Speed Heat' },
+    'CUSA15119': { key: 'CUSA15119', display: 'The Legend of Heroes: Trails of Cold Steel III' },
+    'CUSA15128': { key: 'CUSA15128', display: 'DYSMANTLE' },
+    'CUSA15145': { key: 'CUSA15145', display: 'Power Rangers - Battle for The Grid' },
+    'CUSA15161': { key: 'CUSA15161', display: 'Chronos Before the Ashes' },
+    'CUSA15162': { key: 'CUSA15162', display: 'Toki' },
+    'CUSA15225': { key: 'CUSA15225', display: 'The Incredible Adventures of Van Helsing III' },
+    'CUSA15257': { key: 'CUSA15257', display: 'CRYSTAR' },
+    'CUSA15284': { key: 'CUSA15145', display: 'Power Rangers - Battle for The Grid' },
+    'CUSA15300': { key: 'CUSA15300', display: 'Travis Strikes Again: No More Heroes' },
+    'CUSA15306': { key: 'CUSA17812', display: 'Terminator: Resistance' },
+    'CUSA15326': { key: 'CUSA15361', display: 'Yakuza 4' },
+    'CUSA15360': { key: 'CUSA15360', display: 'Yakuza 3 Remastered' },
+    'CUSA15361': { key: 'CUSA15361', display: 'Yakuza 4' },
+    'CUSA15363': { key: 'CUSA15363', display: 'YAKUZA 5' },
+    'CUSA15436': { key: 'CUSA15436', display: 'Kingdom Come: Deliverance Royal Edition' },
+    'CUSA15438': { key: 'CUSA15438', display: 'Zombieland: Double Tap - Road Trip' },
+    'CUSA15493': { key: 'CUSA15493', display: 'Ghostbusters: The Video Game Remastered' },
+    'CUSA15495': { key: 'CUSA15495', display: 'Surviving the Aftermath' },
+    'CUSA15526': { key: 'CUSA15526', display: 'Nioh 2' },
+    'CUSA15532': { key: 'CUSA15526', display: 'Nioh 2' },
+    'CUSA15690': { key: 'CUSA15690', display: 'Frostpunk' },
+    'CUSA15717': { key: 'CUSA15778', display: 'Far Cry 6' },
+    'CUSA15778': { key: 'CUSA15778', display: 'Far Cry 6' },
+    'CUSA15884': { key: 'CUSA15884', display: 'Two Point Hospital' },
+    'CUSA15915': { key: 'CUSA15915', display: 'SAMURAI SHODOWN' },
+    'CUSA15927': { key: 'CUSA15927', display: 'Fury Unleashed' },
+    'CUSA16084': { key: 'CUSA16084', display: 'West of Dead' },
+    'CUSA16146': { key: 'CUSA16146', display: 'The Survivalists' },
+    'CUSA16163': { key: 'CUSA16163', display: 'Bayonetta' },
+    'CUSA16164': { key: 'CUSA16164', display: 'Sniper Elite 5' },
+    'CUSA16195': { key: 'CUSA16195', display: 'DIRT 5' },
+    'CUSA16221': { key: 'CUSA16221', display: 'Streets of Rage 4' },
+    'CUSA16261': { key: 'CUSA16261', display: 'Blasphemous' },
+    'CUSA16264': { key: 'CUSA16264', display: 'ONE PUNCH MAN: A HERO NOBODY KNOWS' },
+    'CUSA16273': { key: 'CUSA16146', display: 'The Survivalists' },
+    'CUSA16286': { key: 'CUSA16286', display: 'Doom 3' },
+    'CUSA16289': { key: 'CUSA16289', display: 'Samurai Jack: Battle Through Time' },
+    'CUSA16296': { key: 'CUSA16296', display: 'DOOM 64' },
+    'CUSA16298': { key: 'CUSA16298', display: 'MONKEY KING: HERO IS BACK' },
+    'CUSA16319': { key: 'CUSA16319', display: 'Sd Gundam G Generation Cross Rays' },
+    'CUSA16345': { key: 'CUSA16345', display: 'Immortals Fenyx Rising' },
+    'CUSA16446': { key: 'CUSA16446', display: 'Gunvolt Chronicles: Luminous Avenger iX' },
+    'CUSA16458': { key: 'CUSA16458', display: 'Atelier Ryza: Ever Darkness & the Secret Hideout' },
+    'CUSA16523': { key: 'CUSA16523', display: 'Yaga' },
+    'CUSA16553': { key: 'CUSA16553', display: 'Cat Quest II' },
+    'CUSA16579': { key: 'CUSA16579', display: 'Cyberpunk 2077' },
+    'CUSA16596': { key: 'CUSA16579', display: 'Cyberpunk 2077' },
+    'CUSA16644': { key: 'CUSA16644', display: '9 Monkeys of Shaolin' },
+    'CUSA16720': { key: 'CUSA16720', display: 'Corpse Killer - 25th Anniversary Edition' },
+    'CUSA16734': { key: 'CUSA16734', display: 'Yakuza: Like a Dragon' },
+    'CUSA16745': { key: 'CUSA16734', display: 'Yakuza: Like a Dragon' },
+    'CUSA16765': { key: 'CUSA16765', display: 'WONDER BOY RETURNS REMIX' },
+    'CUSA16782': { key: 'CUSA16782', display: 'Werewolf: The Apocalypse - Earthblood' },
+    'CUSA16968': { key: 'CUSA16975', display: 'Disney Classic Games: Aladdin and The Lion King' },
+    'CUSA16975': { key: 'CUSA16975', display: 'Disney Classic Games: Aladdin and The Lion King' },
+    'CUSA16978': { key: 'CUSA16978', display: 'Trials of Mana' },
+    'CUSA16983': { key: 'CUSA16983', display: 'Asterix & Obelix XXL3' },
+    'CUSA16990': { key: 'CUSA16990', display: 'Mafia II: Definitive Edition' },
+    'CUSA17050': { key: 'CUSA16978', display: 'Trials of Mana' },
+    'CUSA17052': { key: 'CUSA17052', display: 'Sakuna: Of Rice and Ruin' },
+    'CUSA17082': { key: 'CUSA17082', display: 'Daymare 1998' },
+    'CUSA17160': { key: 'CUSA17160', display: 'The TakeOver' },
+    'CUSA17195': { key: 'CUSA17195', display: 'Tales of Arise' },
+    'CUSA17226': { key: 'CUSA17226', display: 'ONE PIECE: PIRATE WARRIORS 4' },
+    'CUSA17245': { key: 'CUSA17245', display: 'Kingdoms of Amalur: Re-Reckoning' },
+    'CUSA17374': { key: 'CUSA17374', display: 'KAMENRIDER memory of heroez' },
+    'CUSA17419': { key: 'CUSA17419', display: 'Persona 5 Royal' },
+    'CUSA17425': { key: 'CUSA17438', display: 'SnowRunner' },
+    'CUSA17438': { key: 'CUSA17438', display: 'SnowRunner' },
+    'CUSA17453': { key: 'CUSA17453', display: 'Zombie Driver: Immortal Edition' },
+    'CUSA17573': { key: 'CUSA17573', display: 'FAIRY TAIL' },
+    'CUSA17589': { key: 'CUSA17589', display: '妖怪ウォッチ4++' },
+    'CUSA17598': { key: 'CUSA17598', display: 'Weird West' },
+    'CUSA17602': { key: 'CUSA17602', display: 'Planet Coaster' },
+    'CUSA17675': { key: 'CUSA17675', display: 'Moving Out' },
+    'CUSA17722': { key: 'CUSA17776', display: 'Marvel\'s Spider-Man: Miles Morales' },
+    'CUSA17732': { key: 'CUSA17732', display: 'Empire of Sin' },
+    'CUSA17761': { key: 'CUSA16990', display: 'Mafia II: Definitive Edition' },
+    'CUSA17774': { key: 'CUSA17774', display: 'EP4062-CUSA17774_00-0000000000000000' },
+    'CUSA17776': { key: 'CUSA17776', display: 'Marvel\'s Spider-Man: Miles Morales' },
+    'CUSA17801': { key: 'CUSA17801', display: 'Hellpoint' },
+    'CUSA17806': { key: 'CUSA17801', display: 'Hellpoint' },
+    'CUSA17812': { key: 'CUSA17812', display: 'Terminator: Resistance' },
+    'CUSA18008': { key: 'CUSA18017', display: 'Resident Evil Village' },
+    'CUSA18017': { key: 'CUSA18017', display: 'Resident Evil Village' },
+    'CUSA18100': { key: 'CUSA18100', display: 'Mafia Definitive Edition' },
+    'CUSA18145': { key: 'CUSA18145', display: 'My Friend Pedro - Blood Bullets Bananas' },
+    'CUSA18152': { key: 'CUSA18449', display: 'Stranded Deep' },
+    'CUSA18182': { key: 'CUSA18182', display: 'NHL 21' },
+    'CUSA18201': { key: 'CUSA18210', display: 'HITMAN 3' },
+    'CUSA18210': { key: 'CUSA18210', display: 'HITMAN 3' },
+    'CUSA18223': { key: 'CUSA18223', display: 'DIGIMON SURVIVE' },
+    'CUSA18278': { key: 'CUSA16579', display: 'Cyberpunk 2077' },
+    'CUSA18354': { key: 'CUSA18354', display: 'Yet Another Zombie Defense HD' },
+    'CUSA18374': { key: 'CUSA18374', display: 'SWORD ART ONLINE Alicization Lycoris' },
+    'CUSA18442': { key: 'CUSA18442', display: 'Remnant: From the Ashes' },
+    'CUSA18449': { key: 'CUSA18449', display: 'Stranded Deep' },
+    'CUSA18501': { key: 'CUSA18501', display: 'DORAEMON STORY OF SEASONS' },
+    'CUSA18507': { key: 'CUSA18507', display: 'Freedom Finger' },
+    'CUSA18522': { key: 'CUSA18522', display: 'Assassin\'s Creed Valhalla' },
+    'CUSA18534': { key: 'CUSA18522', display: 'Assassin\'s Creed Valhalla' },
+    'CUSA18581': { key: 'CUSA18723', display: 'Elden Ring' },
+    'CUSA18600': { key: 'CUSA18600', display: 'Dragon Quest XI: Echoes of an Elusive Age' },
+    'CUSA18659': { key: 'CUSA18671', display: 'Crysis Remastered' },
+    'CUSA18671': { key: 'CUSA18671', display: 'Crysis Remastered' },
+    'CUSA18672': { key: 'CUSA18672', display: 'Crysis2 Remastered' },
+    'CUSA18673': { key: 'CUSA18673', display: 'Crysis3 Remastered' },
+    'CUSA18683': { key: 'CUSA18683', display: 'MOBILE SUIT GUNDAM EXTREME VS. MAXIBOOST ON' },
+    'CUSA18685': { key: 'CUSA18685', display: 'Immortal Realms: Vampire Wars' },
+    'CUSA18723': { key: 'CUSA18723', display: 'Elden Ring' },
+    'CUSA18742': { key: 'CUSA18742', display: 'NieR Replicant ver.1.22474487139...' },
+    'CUSA18779': { key: 'CUSA18779', display: 'Minecraft Dungeons' },
+    'CUSA18797': { key: 'CUSA18779', display: 'Minecraft Dungeons' },
+    'CUSA18808': { key: 'CUSA18808', display: 'Harvest Moon: One World' },
+    'CUSA18880': { key: 'CUSA18723', display: 'Elden Ring' },
+    'CUSA18886': { key: 'CUSA18886', display: 'Sackboy: A Big Adventure' },
+    'CUSA18917': { key: 'CUSA18917', display: 'Neon Abyss' },
+    'CUSA18956': { key: 'CUSA18956', display: 'Cobra Kai: The Karate Kid Saga Continues' },
+    'CUSA19035': { key: 'CUSA19035', display: 'Crash Bandicoot 4: Its About Time' },
+    'CUSA19057': { key: 'CUSA19057', display: 'Minoria' },
+    'CUSA19096': { key: 'CUSA19096', display: 'XIII Remake' },
+    'CUSA19120': { key: 'CUSA18600', display: 'Dragon Quest XI: Echoes of an Elusive Age' },
+    'CUSA19177': { key: 'CUSA19177', display: 'Construction Simulator' },
+    'CUSA19210': { key: 'CUSA19210', display: 'guilty gear strive' },
+    'CUSA19351': { key: 'CUSA19351', display: 'Sonic Colors: Ultimate' },
+    'CUSA19361': { key: 'CUSA19361', display: 'Project Warlock' },
+    'CUSA19412': { key: 'CUSA19412', display: 'UP4133-CUSA19412_00-0000000CURSEGAME' },
+    'CUSA19500': { key: 'CUSA19515', display: 'Mass Effect Legendary Edition' },
+    'CUSA19515': { key: 'CUSA19515', display: 'Mass Effect Legendary Edition' },
+    'CUSA19541': { key: 'CUSA19541', display: 'Asterix & Obelix XXL' },
+    'CUSA19549': { key: 'CUSA19549', display: 'Blue Fire' },
+    'CUSA19608': { key: 'CUSA19608', display: 'Police Simulator: Patrol Officers' },
+    'CUSA19633': { key: 'CUSA19633', display: 'Battle Axe' },
+    'CUSA19637': { key: 'CUSA19637', display: 'The Legend of Heroes: Trails of Cold Steel IV' },
+    'CUSA19640': { key: 'CUSA19640', display: 'Persona 5 Striker' },
+    'CUSA19647': { key: 'CUSA19647', display: 'Blaster Master Zero' },
+    'CUSA19648': { key: 'CUSA19648', display: 'Blaster Master Zero 2' },
+    'CUSA20100': { key: 'CUSA20100', display: 'Project CARS 3' },
+    'CUSA20133': { key: 'CUSA20133', display: 'Mortal Shell' },
+    'CUSA20201': { key: 'CUSA20201', display: 'Turok -Dinosaur Hunter' },
+    'CUSA20221': { key: 'CUSA20221', display: 'Chorus' },
+    'CUSA20239': { key: 'CUSA20239', display: 'Alex Kidd in Miracle Worlds DX' },
+    'CUSA20302': { key: 'CUSA20302', display: 'New Super Luckys Tale' },
+    'CUSA20373': { key: 'CUSA20373', display: 'Sniper Ghost Warrior Contracts 2' },
+    'CUSA20374': { key: 'CUSA20374', display: 'ONE PIECE ODYSSEY' },
+    'CUSA20413': { key: 'CUSA20414', display: 'Ys IX: Monstrum Nox' },
+    'CUSA20414': { key: 'CUSA20414', display: 'Ys IX: Monstrum Nox' },
+    'CUSA20469': { key: 'CUSA20469', display: 'Cuphead (7.55)' },
+    'CUSA20495': { key: 'CUSA20495', display: 'Edge Of Eternity' },
+    'CUSA20499': { key: 'CUSA20499', display: 'Cuphead' },
+    'CUSA20624': { key: 'CUSA20624', display: 'Gryphon Knight Epic: Definitive Edition' },
+    'CUSA23090': { key: 'CUSA23090', display: 'House Flipper' },
+    'CUSA23265': { key: 'CUSA23265', display: 'Need for Speed Hot Pursuit Remastered' },
+    'CUSA23384': { key: 'CUSA23384', display: 'Haven' },
+    'CUSA23443': { key: 'CUSA23444', display: 'Aragami 2' },
+    'CUSA23444': { key: 'CUSA23444', display: 'Aragami 2' },
+    'CUSA23631': { key: 'CUSA47037', display: 'Metaphor: ReFantazio' },
+    'CUSA23755': { key: 'CUSA23755', display: 'Asterix and Obelix - Slap them all!' },
+    'CUSA23766': { key: 'CUSA23766', display: 'Tiny Tinas Wonderlands' },
+    'CUSA23852': { key: 'CUSA23852', display: 'ANNO: Mutationem' },
+    'CUSA24041': { key: 'CUSA24041', display: 'Call of Duty: Vanguard' },
+    'CUSA24065': { key: 'CUSA24065', display: 'Outbreak The Nightmare Chronicles' },
+    'CUSA24095': { key: 'CUSA24095', display: 'NINJA GAIDEN 3: Razors Edge' },
+    'CUSA24103': { key: 'CUSA24103', display: 'Marvels Guardians of the Galaxy' },
+    'CUSA24159': { key: 'CUSA24159', display: 'Ghosts n Goblins Resurrection' },
+    'CUSA24169': { key: 'CUSA24169', display: 'Ghostrunner' },
+    'CUSA24172': { key: 'CUSA24172', display: 'Five Nights at Freddys: Security Breach' },
+    'CUSA24216': { key: 'CUSA24216', display: 'Cyber Shadow' },
+    'CUSA24267': { key: 'CUSA24267', display: 'Call of Duty: Black Ops Cold War' },
+    'CUSA24463': { key: 'CUSA24463', display: 'Dynasty Warriors 9 Empires' },
+    'CUSA24519': { key: 'CUSA24519', display: 'Legend of Mana' },
+    'CUSA24605': { key: 'CUSA24605', display: 'Two Point Campus' },
+    'CUSA24653': { key: 'CUSA24653', display: 'Alan Wake Remastered' },
+    'CUSA24669': { key: 'CUSA24669', display: 'Bladed Fury' },
+    'CUSA24705': { key: 'CUSA24705', display: 'Horizon Forbidden West' },
+    'CUSA24814': { key: 'CUSA24814', display: 'BALAN WONDERWORLD' },
+    'CUSA24828': { key: 'CUSA24828', display: 'Paw Paw Paw' },
+    'CUSA24853': { key: 'CUSA25000', display: 'Kena: Bridge of Spirits' },
+    'CUSA24879': { key: 'CUSA24879', display: 'Legends of Ethernal' },
+    'CUSA24899': { key: 'CUSA24899', display: 'Stray' },
+    'CUSA24919': { key: 'CUSA24919', display: 'Shin Megami Tensei III Nocturne HD Remaster' },
+    'CUSA25000': { key: 'CUSA25000', display: 'Kena: Bridge of Spirits' },
+    'CUSA25058': { key: 'CUSA25058', display: 'Habroxia 2' },
+    'CUSA25087': { key: 'CUSA25087', display: 'Clid The Snail' },
+    'CUSA25132': { key: 'CUSA25269', display: 'Scarlet Nexus' },
+    'CUSA25215': { key: 'CUSA25215', display: 'Turok-Dinosaur-2' },
+    'CUSA25234': { key: 'CUSA25234', display: 'Dark Alliance' },
+    'CUSA25269': { key: 'CUSA25269', display: 'Scarlet Nexus' },
+    'CUSA25272': { key: 'CUSA25272', display: 'THE KING OF FIGHTERS XV Standard Edition' },
+    'CUSA25283': { key: 'CUSA25283', display: 'My Name is Mayo 2' },
+    'CUSA25298': { key: 'CUSA25298', display: 'Wukong' },
+    'CUSA25372': { key: 'CUSA25372', display: 'Tesla Force' },
+    'CUSA25453': { key: 'CUSA25453', display: 'Necromunda : Hired Gun' },
+    'CUSA25458': { key: 'CUSA25458', display: 'R-TYPE FINAL 2' },
+    'CUSA25502': { key: 'CUSA25502', display: 'Hot Wheels Unleashed' },
+    'CUSA25567': { key: 'CUSA25453', display: 'Necromunda : Hired Gun' },
+    'CUSA25569': { key: 'CUSA25569', display: 'Evil West' },
+    'CUSA25617': { key: 'CUSA25617', display: 'Big Rumble Boxing Creed Champions' },
+    'CUSA25706': { key: 'CUSA25706', display: 'Car Mechanic Simulator 2021' },
+    'CUSA25758': { key: 'CUSA25758', display: 'EP4293-CUSA25758_00-7767648150072086' },
+    'CUSA25761': { key: 'CUSA30202', display: 'SIFU' },
+    'CUSA25791': { key: 'CUSA25791', display: 'Golden Force' },
+    'CUSA25882': { key: 'CUSA25882', display: 'WWE 2K22' },
+    'CUSA25889': { key: 'CUSA25889', display: 'NINJA GAIDEN Σ' },
+    'CUSA25892': { key: 'CUSA25892', display: 'NINJA GAIDEN Σ2' },
+    'CUSA25924': { key: 'CUSA25924', display: 'Mickey Storm and the Cursed Mask' },
+    'CUSA25931': { key: 'CUSA25931', display: 'Landflix Odyssey' },
+    'CUSA26005': { key: 'CUSA26005', display: 'Story Of Season Friend Mineral Town' },
+    'CUSA26035': { key: 'CUSA26035', display: 'Solar Ash' },
+    'CUSA26098': { key: 'CUSA26098', display: 'King\'s Bounty II' },
+    'CUSA26114': { key: 'CUSA26114', display: 'ENDER LILIES : Quietus of the Knights' },
+    'CUSA26258': { key: 'CUSA26258', display: 'UP1249-CUSA26258_00-6920210578712389' },
+    'CUSA26357': { key: 'CUSA26357', display: 'Shadow Warrior 3' },
+    'CUSA26377': { key: 'CUSA26377', display: 'Neo : The World Ends With You' },
+    'CUSA26454': { key: 'CUSA26454', display: 'Oddworld - Strangers' },
+    'CUSA26458': { key: 'CUSA26458', display: 'Saints Row' },
+    'CUSA26491': { key: 'CUSA26491', display: 'RICO London' },
+    'CUSA26546': { key: 'CUSA26546', display: 'Green Hell' },
+    'CUSA26608': { key: 'CUSA26608', display: 'Blood-Rayne-Betrayal.Fresh.Bites' },
+    'CUSA26613': { key: 'CUSA26613', display: 'Grand Theft Auto: The Trilogy – The Definitive Edition' },
+    'CUSA26615': { key: 'CUSA26613', display: 'Grand Theft Auto: The Trilogy – The Definitive Edition' },
+    'CUSA26616': { key: 'CUSA26613', display: 'Grand Theft Auto: The Trilogy – The Definitive Edition' },
+    'CUSA26619': { key: 'CUSA26613', display: 'Grand Theft Auto: The Trilogy – The Definitive Edition' },
+    'CUSA26670': { key: 'CUSA26670', display: 'The Smurfs Mission Vileaf' },
+    'CUSA26736': { key: 'CUSA26736', display: 'Wonder Boy: Asha in monster World' },
+    'CUSA26967': { key: 'CUSA26967', display: 'Tunic' },
+    'CUSA27043': { key: 'CUSA27043', display: 'Dead Island 2' },
+    'CUSA27106': { key: 'CUSA27106', display: 'FIFA22' },
+    'CUSA27145': { key: 'CUSA27145', display: 'Psychonauts 2' },
+    'CUSA27306': { key: 'CUSA27306', display: 'DEMON SLAYER' },
+    'CUSA27309': { key: 'CUSA27309', display: 'GRIME' },
+    'CUSA27312': { key: 'CUSA27312', display: 'Baldo The Guardian Owls' },
+    'CUSA27319': { key: 'CUSA27319', display: 'Jurassic World Evolution 2' },
+    'CUSA27321': { key: 'CUSA27319', display: 'Jurassic World Evolution 2' },
+    'CUSA27373': { key: 'CUSA27373', display: 'The Callisto Protocol' },
+    'CUSA27387': { key: 'CUSA27387', display: 'Hades' },
+    'CUSA27428': { key: 'CUSA27428', display: 'Skul' },
+    'CUSA27462': { key: 'CUSA27462', display: 'Aliens: Fireteam Elite (PS4)' },
+    'CUSA27578': { key: 'CUSA27578', display: 'Blaster Master Zero 3' },
+    'CUSA27656': { key: 'CUSA27656', display: 'Dark Thrones' },
+    'CUSA27670': { key: 'CUSA27670', display: 'UnMetal' },
+    'CUSA27730': { key: 'CUSA27730', display: 'Soul Hackers 2' },
+    'CUSA27782': { key: 'CUSA27782', display: 'Wife Quest' },
+    'CUSA27790': { key: 'CUSA27790', display: 'WRC 10 FIA World Rally Championship' },
+    'CUSA27816': { key: 'CUSA27816', display: 'Marsupilami Hoobadventure' },
+    'CUSA27913': { key: 'CUSA27913', display: 'Gungrave G.O.R.E' },
+    'CUSA27997': { key: 'CUSA27997', display: 'Baldur\'s Gate: Dark Alliance' },
+    'CUSA28037': { key: 'CUSA28037', display: 'Chernobylite' },
+    'CUSA28134': { key: 'CUSA28134', display: 'ELEX II' },
+    'CUSA28183': { key: 'CUSA28183', display: 'LOST JUDGMENT：裁かれざる記憶' },
+    'CUSA28186': { key: 'CUSA28186', display: 'Lost Judgment' },
+    'CUSA28194': { key: 'CUSA28194', display: 'SONIC FRONTIERS' },
+    'CUSA28261': { key: 'CUSA28261', display: 'GRID Legends' },
+    'CUSA28305': { key: 'CUSA28305', display: 'Diablo 2 Resurrected' },
+    'CUSA28373': { key: 'CUSA28373', display: 'F.I.S.T.' },
+    'CUSA28381': { key: 'CUSA28381', display: 'Dragons Legends of The Nine Realms' },
+    'CUSA28465': { key: 'CUSA28465', display: 'Tails of Iron' },
+    'CUSA28527': { key: 'CUSA18723', display: 'Elden Ring' },
+    'CUSA28529': { key: 'CUSA28529', display: 'Eldest Souls' },
+    'CUSA28535': { key: 'CUSA28535', display: 'Monster Energy Supercross - The Official Videogame 5' },
+    'CUSA28561': { key: 'CUSA24705', display: 'Horizon Forbidden West' },
+    'CUSA28600': { key: 'CUSA28600', display: 'The Cruel King and the Great Hero' },
+    'CUSA28812': { key: 'CUSA29604', display: 'Neptunia x SENRAN KAGURA - Ninja Wars' },
+    'CUSA28863': { key: 'CUSA18723', display: 'Elden Ring' },
+    'CUSA28987': { key: 'CUSA28987', display: '零 ～濡鴉之巫女～' },
+    'CUSA29007': { key: 'CUSA29007', display: 'Far Cry 3' },
+    'CUSA29092': { key: 'CUSA24041', display: 'Call of Duty: Vanguard' },
+    'CUSA29102': { key: 'CUSA29102', display: 'Tales of Symphonia Remastered' },
+    'CUSA29191': { key: 'CUSA29192', display: 'The Last Stand: Aftermath' },
+    'CUSA29192': { key: 'CUSA29192', display: 'The Last Stand: Aftermath' },
+    'CUSA29199': { key: 'CUSA29199', display: 'Tormented souls' },
+    'CUSA29358': { key: 'CUSA29358', display: 'My Universe - Puppies and Kittens' },
+    'CUSA29366': { key: 'CUSA29366', display: 'Record of Lodoss War -Deedlit in Wonder Labyrinth-' },
+    'CUSA29456': { key: 'CUSA29456', display: 'United Assault - Normandy \'44' },
+    'CUSA29578': { key: 'CUSA29578', display: 'STRANGER OF PARADISE FINAL FANTASY ORIGIN' },
+    'CUSA29604': { key: 'CUSA29604', display: 'Neptunia x SENRAN KAGURA - Ninja Wars' },
+    'CUSA29645': { key: 'CUSA29645', display: 'Wildcat Gun Machine' },
+    'CUSA29671': { key: 'CUSA29671', display: 'Airport Simulator - Day & Night' },
+    'CUSA29735': { key: 'CUSA29735', display: 'Miraculous: Rise of the Sphinx' },
+    'CUSA29794': { key: 'CUSA29794', display: 'Sword and Fairy : Together Forever' },
+    'CUSA29809': { key: 'CUSA29809', display: 'Lawn Mowing Simulator' },
+    'CUSA29850': { key: 'CUSA29850', display: 'DeadCraft' },
+    'CUSA30202': { key: 'CUSA30202', display: 'SIFU' },
+    'CUSA30300': { key: 'CUSA30300', display: 'Krut The Mythic Wings' },
+    'CUSA30423': { key: 'CUSA30423', display: 'Death\'s Door' },
+    'CUSA30888': { key: 'CUSA30888', display: 'Road 96' },
+    'CUSA30891': { key: 'CUSA30891', display: 'Kao the Kangaroo' },
+    'CUSA30991': { key: 'CUSA30991', display: 'TMNTSR' },
+    'CUSA31022': { key: 'CUSA31022', display: 'Shootas, Blood & Teef' },
+    'CUSA31337': { key: 'CUSA31337', display: 'Greak: Memories of Azur' },
+    'CUSA31349': { key: 'CUSA31349', display: 'CRISIS CORE FINAL FANTASY VII REUNION' },
+    'CUSA31481': { key: 'CUSA31481', display: 'Risen' },
+    'CUSA31498': { key: 'CUSA31498', display: 'STREET FIGHTER 6' },
+    'CUSA31798': { key: 'CUSA31798', display: 'Souldiers' },
+    'CUSA31855': { key: 'CUSA31855', display: 'STAR OCEAN THE DIVINE FORCE' },
+    'CUSA31873': { key: 'CUSA31873', display: 'FIFA 23' },
+    'CUSA32074': { key: 'CUSA32074', display: 'Pac-Man World Re-Pac' },
+    'CUSA32132': { key: 'CUSA32132', display: 'Like a Dragon: Infinite Wealth' },
+    'CUSA32137': { key: 'CUSA32132', display: 'Like a Dragon: Infinite Wealth' },
+    'CUSA32167': { key: 'CUSA32167', display: 'No More Heroes III' },
+    'CUSA32174': { key: 'CUSA32174', display: 'Like a Dragon Ishin' },
+    'CUSA32236': { key: 'CUSA32236', display: 'UP7013-CUSA32236_00-8367207855877469' },
+    'CUSA32418': { key: 'CUSA32418', display: 'Lumberjack\'s Dynasty' },
+    'CUSA32577': { key: 'CUSA32577', display: 'Kamiwaza: Way of the Thief' },
+    'CUSA32701': { key: 'CUSA32701', display: 'Wanted: Dead' },
+    'CUSA32720': { key: 'CUSA32720', display: 'Source of Madness' },
+    'CUSA32759': { key: 'CUSA32759', display: 'Ganryu 2' },
+    'CUSA32805': { key: 'CUSA32805', display: 'Samurai Bringer' },
+    'CUSA32946': { key: 'CUSA32946', display: 'Final Vendetta' },
+    'CUSA33150': { key: 'CUSA33150', display: 'Assassin\'s Creed Mirage' },
+    'CUSA33151': { key: 'CUSA33150', display: 'Assassin\'s Creed Mirage' },
+    'CUSA33214': { key: 'CUSA33214', display: 'VALKYRIE ELYSIUM' },
+    'CUSA33241': { key: 'CUSA33241', display: 'Vampire: The Masquerade – Swansong' },
+    'CUSA33388': { key: 'CUSA04885', display: 'Resident Evil 4' },
+    'CUSA33533': { key: 'CUSA33533', display: 'Ghost Song' },
+    'CUSA33609': { key: 'CUSA33609', display: 'WRC Generations' },
+    'CUSA33778': { key: 'CUSA33778', display: 'STAR WARS Jedi Survivor' },
+    'CUSA33782': { key: 'CUSA33782', display: 'Potion Permit' },
+    'CUSA33874': { key: 'CUSA33874', display: 'Persona 4 Golden' },
+    'CUSA33906': { key: 'CUSA33906', display: 'Salt and Sacrifice' },
+    'CUSA34029': { key: 'CUSA34029', display: 'Call of Duty Modern Warfare II' },
+    'CUSA34073': { key: 'CUSA34073', display: 'Asterigos: Curse of the Stars' },
+    'CUSA34118': { key: 'CUSA34119', display: 'Monster Hunter Rise: Sunbreak' },
+    'CUSA34119': { key: 'CUSA34119', display: 'Monster Hunter Rise: Sunbreak' },
+    'CUSA34120': { key: 'CUSA34119', display: 'Monster Hunter Rise: Sunbreak' },
+    'CUSA34121': { key: 'CUSA34119', display: 'Monster Hunter Rise: Sunbreak' },
+    'CUSA34179': { key: 'CUSA34179', display: 'WWE2K23' },
+    'CUSA34384': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34386': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34388': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34390': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34392': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34394': { key: 'CUSA34384', display: 'God of War Ragnarök' },
+    'CUSA34422': { key: 'CUSA34422', display: 'SIGNALIS' },
+    'CUSA34697': { key: 'CUSA34697', display: 'Sand Land' },
+    'CUSA34698': { key: 'CUSA34697', display: 'Sand Land' },
+    'CUSA34766': { key: 'CUSA34766', display: 'Granblue Fantasy Relink' },
+    'CUSA34896': { key: 'CUSA34896', display: 'EP0001-CUSA34896_00-BGER000000000000' },
+    'CUSA35014': { key: 'CUSA35014', display: 'MOONSCARS' },
+    'CUSA35744': { key: 'CUSA35744', display: 'infinity strash: dragon quest the adventure of dai!' },
+    'CUSA35761': { key: 'CUSA35761', display: 'EP4064-CUSA35761_00-DREDGE0000000000' },
+    'CUSA35844': { key: 'CUSA35844', display: 'Jujutsu Kaisen Cursed Clash' },
+    'CUSA36164': { key: 'CUSA36167', display: 'Destroy All Humans! 2 - Reprobed' },
+    'CUSA36167': { key: 'CUSA36167', display: 'Destroy All Humans! 2 - Reprobed' },
+    'CUSA36274': { key: 'CUSA36274', display: 'OCTOPATH TRAVELER II' },
+    'CUSA36581': { key: 'CUSA36582', display: 'Prince of Persia: The Lost Crown' },
+    'CUSA36582': { key: 'CUSA36582', display: 'Prince of Persia: The Lost Crown' },
+    'CUSA36843': { key: 'CUSA36843', display: 'Red Dead Redemption' },
+    'CUSA36846': { key: 'CUSA37028', display: 'Wo Long: Fallen Dynasty' },
+    'CUSA36986': { key: 'CUSA37028', display: 'Wo Long: Fallen Dynasty' },
+    'CUSA37028': { key: 'CUSA37028', display: 'Wo Long: Fallen Dynasty' },
+    'CUSA37321': { key: 'CUSA37321', display: 'Atomic Heart' },
+    'CUSA37521': { key: 'CUSA37521', display: 'Persona 3 Reload' },
+    'CUSA40262': { key: 'CUSA34119', display: 'Monster Hunter Rise: Sunbreak' },
+    'CUSA40651': { key: 'CUSA40651', display: 'Star Ocean: The Second Story R' },
+    'CUSA40652': { key: 'CUSA40651', display: 'Star Ocean: The Second Story R' },
+    'CUSA40851': { key: 'CUSA40851', display: 'EP0096-CUSA40851_00-0811041933238869' },
+    'CUSA41097': { key: 'CUSA41097', display: 'Afterimage' },
+    'CUSA41300': { key: 'CUSA41300', display: 'Metal Gear Solid - Master Collection Version' },
+    'CUSA41303': { key: 'CUSA41303', display: 'Metal Gear Solid 2_Sons of Liberty' },
+    'CUSA41305': { key: 'CUSA41305', display: 'Metal Gear Solid 3 Snake Eater Master Collection' },
+    'CUSA41744': { key: 'CUSA41744', display: 'EP5335-CUSA41744_00-ALISA00000000000' },
+    'CUSA42378': { key: 'CUSA42378', display: 'Contra.Operation.Galuga' },
+    'CUSA42391': { key: 'CUSA42391', display: 'High on Life' },
+    'CUSA42556': { key: 'CUSA42556', display: 'Grounded' },
+    'CUSA43272': { key: 'CUSA43272', display: 'WWE 2K24' },
+    'CUSA43774': { key: 'CUSA43774', display: 'Tomb Raider I–III Remastered' },
+    'CUSA44317': { key: 'CUSA44317', display: 'Blasphemous II' },
+    'CUSA44836': { key: 'CUSA44836', display: 'Legacy of Kain Soul Reaver 1&2 Remastered' },
+    'CUSA45905': { key: 'CUSA45905', display: 'Shinobi Art of Vengeance Digital Deluxe Edition' },
+    'CUSA47037': { key: 'CUSA47037', display: 'Metaphor: ReFantazio' },
+    'CUSA47038': { key: 'CUSA47037', display: 'Metaphor: ReFantazio' },
+    'CUSA47980': { key: 'CUSA47980', display: 'Slitterhead' },
+    'CUSA48853': { key: 'CUSA48853', display: 'Elden Ring: Nightreign' },
+    'CUSA50614': { key: 'CUSA48853', display: 'Elden Ring: Nightreign' },
+    'CUSA50615': { key: 'CUSA48853', display: 'Elden Ring: Nightreign' },
+    'CUSA50617': { key: 'CUSA48853', display: 'Elden Ring: Nightreign' },
+    'CUSA50688': { key: 'CUSA50688', display: 'Nine Sols' },
+    'CUSA51046': { key: 'CUSA51046', display: 'UP3643-CUSA51046_00-0000000000000000' },
+    'SCES01762': { key: 'SCES01762', display: 'R-Type Delta' },
+    'SCES52412': { key: 'SCES52412', display: 'Jackie Chan Adventures' },
+    'SCES53133': { key: 'CUSA07413', display: 'God of War' },
+    'SCES53135': { key: 'CUSA07413', display: 'God of War' },
+    'SCES54206': { key: 'SCES54206', display: 'God of War II' },
+    'SCUS94227': { key: 'SCUS94227', display: 'MediEvil' },
+    'SCUS94228': { key: 'SLUS00977', display: 'Spyro Reignited Trilogy' },
+    'SCUS94402': { key: 'SCUS94402', display: 'Raiden Project-The' },
+    'SCUS94403': { key: 'SCUS94403', display: 'Philosoma' },
+    'SCUS94425': { key: 'SLUS00977', display: 'Spyro Reignited Trilogy' },
+    'SCUS94467': { key: 'SCUS94467', display: 'Spyro 3.5 - Return to the Forgotten Realms' },
+    'SCUS97102': { key: 'SCUS97102', display: 'Gran Turismo 3' },
+    'SCUS97328': { key: 'SCUS97328', display: 'Gran Turismo 4' },
+    'SLES00503': { key: 'SLES00503', display: 'Mega Man X3' },
+    'SLES00608': { key: 'SLES03986', display: 'CT Special Forces' },
+    'SLES01064': { key: 'SLES01064', display: 'Mega Man 8' },
+    'SLES03986': { key: 'SLES03986', display: 'CT Special Forces' },
+    'SLES04123': { key: 'SLES04123', display: 'CT Special Forces - Back to Hell' },
+    'SLES04155': { key: 'SLES04155', display: 'CT Special Forces 3 - Bioterror' },
+    'SLES50306': { key: 'SLES50306', display: 'Resident Evil-Code-Veronica X' },
+    'SLES50650': { key: 'SLES50650', display: 'Resident Evil-Survivor 2' },
+    'SLES51156': { key: 'SLES51156', display: 'Silent Hill 2' },
+    'SLES51434': { key: 'SLES51434', display: 'Silent-Hill-3' },
+    'SLES51704': { key: 'SLES51704', display: 'XII Stag' },
+    'SLES51746': { key: 'SLES51746', display: 'Space Invaders-Invasion Day' },
+    'SLES51820': { key: 'SLES51820', display: 'Sniper Elite' },
+    'SLES51918': { key: 'SLES51918', display: 'Prince of Persia The Sands of Time' },
+    'SLES52482': { key: 'SLES52482', display: 'Steel Dragon EX' },
+    'SLES53368': { key: 'SLES53368', display: 'Splatter Master' },
+    'SLES53380': { key: 'SLPS66666', display: 'Metal Slug 4' },
+    'SLES53518': { key: 'SLUS20962', display: 'Castle Shikigami 2' },
+    'SLES53548': { key: 'SLES53548', display: 'GigaWing Generations' },
+    'SLES53626': { key: 'SLES53626', display: 'Suffering-The-Ties That Bind' },
+    'SLES53777': { key: 'CUSA08060', display: 'Gravity Rush 2' },
+    'SLES53829': { key: 'SLES53829', display: 'Raiden III' },
+    'SLES53855': { key: 'SLES53855', display: 'Heracles-Battle with the Gods' },
+    'SLES53871': { key: 'SLES53871', display: 'Tengai' },
+    'SLES53872': { key: 'SLES53872', display: 'Samurai Aces' },
+    'SLES53873': { key: 'SLES53873', display: 'Sol Divide' },
+    'SLES53887': { key: 'SLES53887', display: 'Black' },
+    'SLES53908': { key: 'SLES53908', display: 'Lara Croft Tomb Raider-Legend' },
+    'SLES54186': { key: 'SLES54186', display: 'Devil May Cry 3-Dantes Awakening' },
+    'SLES54490': { key: 'SLES54490', display: 'God Hand' },
+    'SLES55512': { key: 'SLES55512', display: 'Sengoku Anthology' },
+    'SLPM55096': { key: 'SLPM55096', display: 'Thunder Force VI' },
+    'SLPM62139': { key: 'SLPM62139', display: 'Psyvariar - Complete Edition' },
+    'SLPM62165': { key: 'SLPM62165', display: 'Shikigami no Shiro' },
+    'SLPM62562': { key: 'SLPM62562', display: 'Psyvariar 2 - Ultimate Final' },
+    'SLPM62602': { key: 'SLPM62602', display: 'Yokushin - GigaWing Generations' },
+    'SLPM62685': { key: 'SLPM62685', display: 'Homura' },
+    'SLPM62726': { key: 'SLPM62726', display: 'Shooting Love-Trizeal' },
+    'SLPM62729': { key: 'SLPM62729', display: 'Akumajou Dracula' },
+    'SLPM66056': { key: 'SLPM66056', display: 'Mushihime-sama' },
+    'SLPM66301': { key: 'SLES03986', display: 'CT Special Forces' },
+    'SLPM66405': { key: 'SLPM66405', display: 'Radirgy Precious (Japan)' },
+    'SLPM86461': { key: 'SLPM86461', display: 'Fantastic Night Dreams - Cotton Original' },
+    'SLPS00728': { key: 'SLPS00728', display: 'Raiden DX' },
+    'SLPS00950': { key: 'SLPS00950', display: 'Metal Slug - Super Vehicle-001' },
+    'SLPS03354': { key: 'SLPS03354', display: 'Zanac X Zanac' },
+    'SLPS25233': { key: 'SLPS25233', display: 'Dodonpachi Dai-Ou-Jou' },
+    'SLPS25352': { key: 'SLPS25352', display: 'Espgaluda' },
+    'SLPS66666': { key: 'SLPS66666', display: 'Metal Slug 4' },
+    'SLUS00067': { key: 'SLUS00067', display: 'CASTLEVANIA SOTN REBORN' },
+    'SLUS00288': { key: 'SLUS00288', display: 'Contra - Legacy of War' },
+    'SLUS00433': { key: 'SLUS00433', display: 'Fighting Force (v1.1)' },
+    'SLUS00435': { key: 'SLUS00435', display: 'Ninja - Shadow of Darkness' },
+    'SLUS00499': { key: 'SLUS00499', display: 'C-The Contra Adventure (USA)' },
+    'SLUS00529': { key: 'SLUS00529', display: 'Disneys Hercules Action Game' },
+    'SLUS00551': { key: 'SLUS00551', display: 'Resident Evil Director\'s Cut' },
+    'SLUS00605': { key: 'SLUS00605', display: 'mortal-kombat-4' },
+    'SLUS00690': { key: 'SLUS00690', display: 'G. Darius' },
+    'SLUS00748': { key: 'SLUS00748', display: 'Resident Evil 2 - Dual Shock Ver' },
+    'SLUS00756': { key: 'SLUS00756', display: 'Resident Evil 2 Claire' },
+    'SLUS00922': { key: 'SLUS00922', display: 'Dino Crisis' },
+    'SLUS00923': { key: 'SLUS00923', display: 'Resident Evil 3 - Nemesis (USA)' },
+    'SLUS00970': { key: 'SLUS00970', display: 'Gekido - Urban Fighters' },
+    'SLUS00977': { key: 'SLUS00977', display: 'Spyro Reignited Trilogy' },
+    'SLUS01279': { key: 'SLUS01279', display: 'Dino Crisis 2' },
+    'SLUS01334': { key: 'SLUS01334', display: 'Mega Man X5' },
+    'SLUS01395': { key: 'SLUS01395', display: 'Mega Man X6' },
+    'SLUS01525': { key: 'SLUS01525', display: 'Mobile Light Force' },
+    'SLUS18251': { key: 'SLUS18251', display: 'Sonic Chapolin' },
+    'SLUS20001': { key: 'SLUS20001', display: 'Tekken Tag Tournamen' },
+    'SLUS20040': { key: 'SLUS20040', display: 'Gradius III and IV' },
+    'SLUS20090': { key: 'SLUS20090', display: 'EMULTOR-ps2' },
+    'SLUS20238': { key: 'SLUS20238', display: 'Crash Bandicoot-The Wrath of Cortex' },
+    'SLUS20306': { key: 'SLUS20306', display: 'Contra-Shattered Soldier' },
+    'SLUS20459': { key: 'SLUS20459', display: 'Shinobi' },
+    'SLUS20487': { key: 'SLUS20487', display: 'Mega Man X7' },
+    'SLUS20636': { key: 'SLUS20636', display: 'Suffering, The' },
+    'SLUS20714': { key: 'SLUS20714', display: 'Red Ninja End of Honor' },
+    'SLUS20770': { key: 'SLUS20770', display: 'Lord of the Rings, The - The Return of the King' },
+    'SLUS20780': { key: 'SLUS20780', display: 'R-Type Fina' },
+    'SLUS20850': { key: 'SLUS20850', display: 'Blowout' },
+    'SLUS20873': { key: 'SLUS20873', display: 'Silent Hill-4-The Room' },
+    'SLUS20960': { key: 'SLUS20960', display: 'Mega-Man-X8' },
+    'SLUS20962': { key: 'SLUS20962', display: 'Castle Shikigami 2' },
+    'SLUS20981': { key: 'SLUS20981', display: 'Teenage Mutant Ninja Turtles 2' },
+    'SLUS20983': { key: 'SLUS20983', display: 'Musashi Samurai Legend' },
+    'SLUS21016': { key: 'SLUS21016', display: '25 to Life (NTSC)' },
+    'SLUS21022': { key: 'SLUS21022', display: 'Prince of Persia-Warrior Within' },
+    'SLUS21087': { key: 'SLUS21087', display: 'mortal kombat Shaolin Monks' },
+    'SLUS21111': { key: 'SLUS21111', display: 'Scarface - The World is Yours' },
+    'SLUS21168': { key: 'SLUS21168', display: 'Castlevania-Curse of Darkness' },
+    'SLUS21306': { key: 'SLUS21306', display: 'Ghost Rider' },
+    'SLUS21320': { key: 'SLUS21320', display: 'Rogue Trooper' },
+    'SLUS21390': { key: 'SLUS21390', display: 'Urban Chaos - Riot Response' },
+    'SLUS21555': { key: 'SLUS21555', display: 'Lara Croft Tomb Raider-Anniversary' },
+    'SLUS21731': { key: 'SLES03986', display: 'CT Special Forces' },
+    'SLUS62390': { key: 'SLUS62390', display: 'Super Mario - 64' },
+  };
+
+  // ─── MANUAL GAME ALIAS TABLE ──────────────────────────────
+  // Each entry: [Preferred Display Name, ...normalized variants that should merge into it]
+  // Variants are matched after: symbol-strip → lowercase → colon/dash collapse → roman numerals
+  const _GAME_GROUPS = [
+    // ── Call of Duty ─────────────────────────────────────────────────────────
+    ['Call of Duty: Black Ops III',
+      'call of duty black ops 3','call of duty black ops iii',
+      'cod black ops 3','cod black ops iii','black ops 3','black ops iii'],
+    ['Call of Duty: Black Ops 4',
+      'call of duty black ops 4','cod black ops 4','black ops 4'],
+    ['Call of Duty: Black Ops Cold War',
+      'call of duty black ops cold war','cod black ops cold war'],
+    ['Call of Duty: WWII',
+      'call of duty wwii','call of duty ww2','cod wwii','cod ww2',
+      'call of duty world war 2','call of duty world war ii',
+      'call of duty wwii campaign','cod world war 2 mp zm','cod world war 2'],
+    ['Call of Duty: Infinite Warfare',
+      'call of duty infinite warfare','cod infinite warfare'],
+    ['Call of Duty: Advanced Warfare',
+      'call of duty advanced warfare','cod advanced warfare'],
+    ['Call of Duty: Modern Warfare Remastered',
+      'call of duty modern warfare remastered','cod modern warfare remastered','cod mwr'],
+    ['Call of Duty: Modern Warfare',
+      'call of duty modern warfare'],
+    ['Call of Duty: Modern Warfare 2 Campaign Remastered',
+      'call of duty modern warfare 2 campaign remastered','cod modern warfare 2 remastered'],
+    ['Call of Duty: Modern Warfare II',
+      'call of duty modern warfare 2','call of duty modern warfare ii'],
+    ['Call of Duty: Vanguard',
+      'call of duty vanguard','cod vanguard'],
+    ['Call of Duty: Ghosts',
+      'call of duty ghosts','cod ghosts','cod ghosts ex'],
+    // ── Grand Theft Auto ─────────────────────────────────────────────────────
+    ['Grand Theft Auto V',
+      'grand theft auto 5','grand theft auto v','gta 5','gta v'],
+    ['Grand Theft Auto IV',
+      'grand theft auto 4','grand theft auto iv','gta 4','gta iv'],
+    // ── Tom Clancy ───────────────────────────────────────────────────────────
+    ["Tom Clancy's The Division",
+      "tom clancy s the division",'the division'],
+    ["Tom Clancy's The Division 2",
+      "tom clancy s the division 2",'the division 2'],
+    ["Tom Clancy's Rainbow Six Siege",
+      "tom clancy s rainbow six siege","tom clancy s rainbow six seige",
+      'rainbow six siege','rainbow six seige'],
+    ["Tom Clancy's Ghost Recon Wildlands",
+      "tom clancy s ghost recon wildlands",'ghost recon wildlands',
+      'tom clancys ghost recon wildlands'],
+    ["Tom Clancy's Ghost Recon Breakpoint",
+      "tom clancy s ghost recon breakpoint",'ghost recon breakpoint'],
+    // ── The Witcher ──────────────────────────────────────────────────────────
+    ['The Witcher 3: Wild Hunt',
+      'the witcher 3 wild hunt','the witcher 3','witcher 3','witcher 3 wild hunt',
+      'the witcher iii wild hunt','witcher iii wild hunt','witcher iii',
+      'the witcher 3 wild hunt complete edition',
+      'the witcher 3 wild hunt game of the year edition'],
+    // ── Dark Souls ───────────────────────────────────────────────────────────
+    ['Dark Souls III',
+      'dark souls 3','dark souls iii','dark souls 3 the fire fades edition'],
+    ['Dark Souls II',
+      'dark souls 2','dark souls ii','dark souls 2 scholar of the first sin'],
+    ['Dark Souls: Remastered', 'dark souls remastered'],
+    // ── inFAMOUS ─────────────────────────────────────────────────────────────
+    ['inFAMOUS Second Son',  'infamous second son'],
+    ['inFAMOUS First Light', 'infamous first light'],
+    // ── Spider-Man ───────────────────────────────────────────────────────────
+    ["Marvel's Spider-Man",
+      "marvel s spider man","marvels spider man","spider man",
+      "spider-man","marvels spider-man","marvel s spider-man"],
+    ["Marvel's Spider-Man: Miles Morales",
+      "marvel s spider man miles morales","spider man miles morales","miles morales"],
+    // ── Batman ───────────────────────────────────────────────────────────────
+    ['Batman: Arkham Knight',  'batman arkham knight'],
+    ['Batman: Arkham Origins', 'batman arkham origins'],
+    ['Batman: Arkham City',
+      'batman arkham city','batman return to arkham arkham city'],
+    ['Batman: Arkham Asylum',  'batman arkham asylum'],
+    // ── Devil May Cry ────────────────────────────────────────────────────────
+    ['Devil May Cry 5',  'devil may cry 5','devil may cry v'],
+    ['Devil May Cry 4',
+      'devil may cry 4','devil may cry iv','devil may cry 4 special edition'],
+    ['Devil May Cry HD Collection',
+      'devil may cry hd collection','devil may cry hd collection 1'],
+    // ── Final Fantasy ────────────────────────────────────────────────────────
+    ['FINAL FANTASY XV',
+      'final fantasy 15','final fantasy xv','final fantasy xv royal edition',
+      'final fantasy xv pocket edition hd','final fantasy 15 pocket edition hd'],
+    ['FINAL FANTASY VII REMAKE',
+      'final fantasy 7 remake','final fantasy vii remake',
+      'final fantasy 7','final fantasy vii'],
+    ['FINAL FANTASY XII: THE ZODIAC AGE',
+      'final fantasy 12 the zodiac age','final fantasy xii the zodiac age',
+      'final fantasy 12','final fantasy xii',
+      'final fantasy the zodiac age'],
+    ['FINAL FANTASY X/X-2 HD Remaster',
+      'final fantasy x x 2 hd remaster','final fantasy x hd remaster'],
+    ['FINAL FANTASY XIV',
+      'final fantasy 14','final fantasy xiv'],
+    // ── NieR ─────────────────────────────────────────────────────────────────
+    ['NieR:Automata',
+      'nier automata','nier:automata',
+      'nier automata become as gods edition','nier automata game of the yorha edition'],
+    ['NieR Replicant',
+      'nier replicant','nier replicant ver 1 22474487139'],
+    // ── Yakuza / Like a Dragon ───────────────────────────────────────────────
+    ['Yakuza 0',         'yakuza 0','yakuza zero'],
+    ['Yakuza Kiwami',    'yakuza kiwami 1','yakuza kiwami'],
+    ['Yakuza Kiwami 2',  'yakuza kiwami 2','yakuza kiwami ii'],
+    ['Yakuza 3 Remastered', 'yakuza 3 remastered','yakuza 3'],
+    ['Yakuza 4 Remastered', 'yakuza 4 remastered','yakuza 4'],
+    ['Yakuza 5 Remastered', 'yakuza 5 remastered','yakuza 5'],
+    ['Yakuza 6: The Song of Life', 'yakuza 6 the song of life','yakuza 6'],
+    ['Yakuza: Like a Dragon',
+      'yakuza like a dragon','like a dragon'],
+    ['Like a Dragon: Infinite Wealth',
+      'like a dragon infinite wealth'],
+    ['Like a Dragon: Ishin',
+      'like a dragon ishin'],
+    // ── Gravity Rush ─────────────────────────────────────────────────────────
+    ['Gravity Rush 2',   'gravity rush 2','gravity rush ii'],
+    ['Gravity Rush Remastered', 'gravity rush remastered','gravity rush 1','gravity rush i'],
+    // ── Battlefield ──────────────────────────────────────────────────────────
+    ['Battlefield 4',    'battlefield 4','battlefield iv'],
+    ['Battlefield 1',    'battlefield 1','battlefield i'],
+    ['Battlefield V',    'battlefield 5','battlefield v'],
+    // ── Assassin's Creed ─────────────────────────────────────────────────────
+    ["Assassin's Creed: The Ezio Collection",
+      "assassin s creed the ezio collection","assassins creed the ezio collection",
+      "assassin s creed 2",
+      "assassin s creed the ezio collection assasins creed 2",
+      "assassins creed the ezio collection assasins creed 2"],
+    ["Assassin's Creed III Remastered",
+      "assassin s creed 3 remastered","assassin s creed iii remastered",
+      "assassins creed 3 remastered","assassins creed iii remastered"],
+    ["Assassin's Creed IV Black Flag",
+      "assassin s creed 4 black flag","assassin s creed iv black flag",
+      "assassin s creed black flag",
+      "assassins creed 4 black flag","assassins creed iv black flag"],
+    ["Assassin's Creed Unity",
+      "assassin s creed unity","assassins creed unity"],
+    ["Assassin's Creed Syndicate",
+      "assassin s creed syndicate","assassins creed syndicate"],
+    ["Assassin's Creed Origins",
+      "assassin s creed origins","assassins creed origins","ac origins"],
+    ["Assassin's Creed Odyssey",
+      "assassin s creed odyssey","assassins creed odyssey"],
+    ["Assassin's Creed Valhalla",
+      "assassin s creed valhalla","assassins creed valhalla"],
+    ["Assassin's Creed Mirage",
+      "assassin s creed mirage","assassins creed mirage"],
+    ["Assassin's Creed Rogue Remastered",
+      "assassin s creed rogue remastered","assassins creed rogue remastered"],
+    // ── Resident Evil ────────────────────────────────────────────────────────
+    ['Resident Evil 7 biohazard',
+      'resident evil 7 biohazard','resident evil 7','resident evil 7 gold edition',
+      'biohazard 7 resident evil','biohazard 7',
+      'resident evil 7 biohazard gold edition'],
+    ['Resident Evil 2',
+      'resident evil 2','resident evil 2 remake','resident evil 2 biohazard remake'],
+    ['Resident Evil 3',
+      'resident evil 3','resident evil 3 remake','resident evil 3 nemesis'],
+    ['Resident Evil Village',
+      'resident evil village','resident evil 8 village','resident evil 8',
+      'resident evil viii','biohazard village'],
+    ['Resident Evil 5',   'resident evil 5','resident evil v'],
+    ['Resident Evil 6',   'resident evil 6','resident evil vi'],
+    ['Resident Evil 4',   'resident evil 4','resident evil iv'],
+    ['Resident Evil: Origins Collection',
+      'resident evil origins collection'],
+    ['Resident Evil: Revelations',
+      'resident evil revelations','resident evil revelation','resident evil revelations 1'],
+    ['Resident Evil: Revelations 2',
+      'resident evil revelations 2'],
+    // ── Horizon ──────────────────────────────────────────────────────────────
+    ['Horizon Zero Dawn',
+      'horizon zero dawn','horizon zero dawn complete edition'],
+    ['Horizon Forbidden West',
+      'horizon forbidden west'],
+    // ── The Last of Us ───────────────────────────────────────────────────────
+    ['The Last of Us Remastered',
+      'the last of us remastered','the last of us','last of us remastered','last of us'],
+    ['The Last of Us Part II',
+      'the last of us part 2','the last of us part ii','last of us part 2','last of us part ii'],
+    // ── God of War ───────────────────────────────────────────────────────────
+    ['God of War',
+      'god of war','god of war 2018','god of war 4','god of war iv'],
+    ['God of War Ragnarök',
+      'god of war ragnarok','god of war ragnarok valhalla dlc compatibility'],
+    ['God of War III Remastered',
+      'god of war 3 remastered','god of war iii remastered'],
+    // ── Uncharted ────────────────────────────────────────────────────────────
+    ['Uncharted 4: A Thief\'s End',
+      "uncharted 4 a thief s end","uncharted 4"],
+    ['Uncharted: The Lost Legacy',
+      'uncharted the lost legacy'],
+    ['Uncharted: The Nathan Drake Collection',
+      'uncharted the nathan drake collection','uncharted nathan drake collection',
+      'uncharted collection uncharted 1'],
+    // ── Borderlands ──────────────────────────────────────────────────────────
+    ['Borderlands 3',    'borderlands 3','borderlands three'],
+    ['Borderlands 2',    'borderlands 2','borderlands ii'],
+    ['Borderlands: The Pre-Sequel',
+      'borderlands the pre sequel','borderlands pre sequel',
+      'borderlands thc borderlands pre sequel'],
+    // ── Monster Hunter ───────────────────────────────────────────────────────
+    ['Monster Hunter: World',
+      'monster hunter world','monster hunter: world'],
+    ['Monster Hunter World: Iceborne',
+      'monster hunter world iceborne','monster hunter world iceborne master edition',
+      'monster hunter iceborne'],
+    ['Monster Hunter Rise: Sunbreak',
+      'monster hunter rise sunbreak'],
+    // ── Persona ──────────────────────────────────────────────────────────────
+    ['Persona 5',        'persona 5','persona5'],
+    ['Persona 5 Royal',  'persona 5 royal','persona5 royal'],
+    ['Persona 5 Strikers', 'persona 5 strikers','persona 5 striker'],
+    ['Persona 3 Reload', 'persona 3 reload'],
+    ['Persona 4 Golden', 'persona 4 golden'],
+    // ── Dragon Age ───────────────────────────────────────────────────────────
+    ['Dragon Age: Inquisition',
+      'dragon age inquisition','dragon age: inquisition','dragon age'],
+    // ── Mass Effect ──────────────────────────────────────────────────────────
+    ['Mass Effect: Andromeda', 'mass effect andromeda'],
+    ['Mass Effect Legendary Edition',
+      'mass effect legendary edition','mass effect 1 legendary edition'],
+    // ── Far Cry ──────────────────────────────────────────────────────────────
+    ['Far Cry 3',
+      'far cry 3','far cry iii',
+      'far cry 3 blood dragon classic edition','far cry 3 classic edition'],
+    ['Far Cry 4',  'far cry 4','far cry iv'],
+    ['Far Cry 5',  'far cry 5','far cry v'],
+    ['Far Cry 6',  'far cry 6','far cry vi'],
+    ['Far Cry Primal', 'far cry primal'],
+    ['Far Cry New Dawn', 'far cry new dawn'],
+    // ── Watch Dogs ───────────────────────────────────────────────────────────
+    ['Watch Dogs',  'watch dogs','watch_dogs'],
+    ['Watch Dogs 2','watch dogs 2','watch_dogs 2','watch dogs ii'],
+    ['Watch Dogs: Legion', 'watch dogs legion','watch_dogs legion'],
+    // ── Need for Speed ───────────────────────────────────────────────────────
+    ['Need for Speed: Payback', 'need for speed payback','nfs payback'],
+    ['Need for Speed: Heat',    'need for speed heat','nfs heat'],
+    ['Need for Speed: Hot Pursuit Remastered', 'need for speed hot pursuit remastered'],
+    ['Need for Speed: Rivals',  'need for speed rivals'],
+    ['Need for Speed',    'need for speed 2015','need for speed'],
+    // ── Red Dead ─────────────────────────────────────────────────────────────
+    ['Red Dead Redemption 2',
+      'red dead redemption 2','red dead redemption ii','rdr2','rdr 2'],
+    // ── Sekiro ───────────────────────────────────────────────────────────────
+    ['Sekiro: Shadows Die Twice',
+      'sekiro shadows die twice','sekiro'],
+    // ── Cyberpunk ────────────────────────────────────────────────────────────
+    ['Cyberpunk 2077', 'cyberpunk 2077'],
+    // ── Detroit / Quantic Dream ──────────────────────────────────────────────
+    ['Detroit: Become Human', 'detroit become human','detroit'],
+    // ── Death Stranding ──────────────────────────────────────────────────────
+    ['Death Stranding',         'death stranding'],
+    ['Death Stranding: Director\'s Cut', "death stranding director s cut"],
+    // ── Spyro ────────────────────────────────────────────────────────────────
+    ["Spyro Reignited Trilogy",
+      'spyro reignited trilogy','spyro the dragon','spyro reignited'],
+    // ── Crash ────────────────────────────────────────────────────────────────
+    ['Crash Bandicoot N. Sane Trilogy',
+      'crash bandicoot n sane trilogy','crash bandicoot n. sane trilogy',
+      'crash bandicoot','crash n sane trilogy'],
+    ['Crash Bandicoot 4: It\'s About Time',
+      'crash bandicoot 4 its about time','crash bandicoot 4'],
+    ['Crash Team Racing Nitro-Fueled',
+      'crash team racing nitro fueled','crash team racing nitro-fueled','ctr nitro fueled'],
+    // ── Ratchet & Clank ──────────────────────────────────────────────────────
+    ['Ratchet & Clank',          'ratchet clank','ratchet & clank'],
+    ['Ratchet & Clank: Rift Apart', 'ratchet clank rift apart'],
+    // ── FIFA ─────────────────────────────────────────────────────────────────
+    ['FIFA 17', 'fifa 17','fifa17'],
+    ['FIFA 18', 'fifa 18','fifa18'],
+    ['FIFA 19', 'fifa 19','fifa19'],
+    ['FIFA 20', 'fifa 20','fifa20'],
+    ['FIFA 21', 'fifa 21','fifa21'],
+    ['FIFA 22', 'fifa 22','fifa22'],
+    ['FIFA 23', 'fifa 23','fifa23'],
+    // ── NBA 2K ───────────────────────────────────────────────────────────────
+    ['NBA 2K14','nba 2k14'],['NBA 2K15','nba 2k15'],['NBA 2K16','nba 2k16'],
+    ['NBA 2K17','nba 2k17'],['NBA 2K18','nba 2k18'],['NBA 2K19','nba 2k19'],
+    ['NBA 2K20','nba 2k20'],['NBA 2K21','nba 2k21'],['NBA 2K22','nba 2k22'],
+    // ── Bloodborne ───────────────────────────────────────────────────────────
+    ['Bloodborne', 'bloodborne','bloodborne the old hunters'],
+    // ── Elden Ring ───────────────────────────────────────────────────────────
+    ['Elden Ring',
+      'elden ring',
+      'elden ring shadow of the erdtree',
+      'elden ring network test ver'],
+    ['Elden Ring: Nightreign',
+      'elden ring nightreign'],
+    // ── Days Gone ────────────────────────────────────────────────────────────
+    ['Days Gone', 'days gone'],
+    // ── Ghost of Tsushima ────────────────────────────────────────────────────
+    ["Ghost of Tsushima",
+      'ghost of tsushima','ghost of tsushima director s cut','ghost of tsushima directors cut'],
+    // ── God of War Ragnarök (already above) ──────────────────────────────────
+    // ── Metal Gear Solid V ───────────────────────────────────────────────────
+    ['Metal Gear Solid V: The Phantom Pain',
+      'metal gear solid 5 phantom pain',
+      'metal gear solid 5 the definitive experience'],
+    // ── Fallout ──────────────────────────────────────────────────────────────
+    ['Fallout 4',
+      'fallout 4',
+      'fallout 4 game of the year edition'],
+    // ── Dying Light ──────────────────────────────────────────────────────────
+    ['Dying Light',
+      'dying light',
+      'dying light the following enhanced edition'],
+    ['Dying Light 2 Stay Human',
+      'dying light 2 stay human'],
+    // ── Captain Tsubasa ──────────────────────────────────────────────────────
+    ['Captain Tsubasa: Rise of New Champions',
+      'captain tsubasa rise of new champion',
+      'captain tsubasa rise of new champions'],
+    // ── Dragon Quest XI ──────────────────────────────────────────────────────
+    ['Dragon Quest XI: Echoes of an Elusive Age',
+      'dragon quest 11 echoes of an elusive age',
+      'dragon quest 11 s echoes of an elusive age definitive edition'],
+    // ── Dragon Ball ──────────────────────────────────────────────────────────
+    ['Dragon Ball Xenoverse 2',
+      'dragon ball xenoverse 2','dragonball xenoverse 2'],
+    // ── No Man's Sky ─────────────────────────────────────────────────────────
+    ["No Man's Sky",
+      'no man s sky','no mans sky'],
+    // ── BioShock ─────────────────────────────────────────────────────────────
+    ['BioShock: The Collection',
+      'bioshock the collection','bioshock infinite the collection'],
+    // ── Nioh ─────────────────────────────────────────────────────────────────
+    ['Nioh',   'nioh','nioh complete edition'],
+    ['Nioh 2', 'nioh 2'],
+    // ── Kingdom Come: Deliverance ─────────────────────────────────────────────
+    ['Kingdom Come: Deliverance',
+      'kingdom come deliverance',
+      'kingdom come deliverance royal edition'],
+    // ── Diablo III ───────────────────────────────────────────────────────────
+    ['Diablo III: Reaper of Souls – Ultimate Evil Edition',
+      'diablo 3 ultimate evil edition',
+      'diablo 3 reaper of souls ultimate evil edition'],
+    // ── This War of Mine ─────────────────────────────────────────────────────
+    ['This War of Mine',
+      'this war of mine',
+      'this war of mine the little ones'],
+    // ── Darksiders ───────────────────────────────────────────────────────────
+    ['Darksiders: Warmastered Edition',
+      'darksiders warmastered edition','darksiders'],
+    ['Darksiders II: Deathinitive Edition',
+      'darksiders 2 deathinitive edition','darksiders 2'],
+    ['Darksiders III', 'darksiders 3'],
+  ];
+
+  // Build fast lookup map: normalized-variant → {key, display}
+  const _ALIAS_MAP = (function() {
+    const m = {};
+    for (const [display, ...variants] of _GAME_GROUPS) {
+      const key = variants[0]; // canonical key = first variant listed
+      for (const v of variants) m[v] = { key, display };
+    }
+    return m;
+  })();
+
+  // Convert Roman numerals (word-boundary; longest first; skips standalone 'i' — too ambiguous)
+  function _applyRoman(s) {
+    return s
+      .replace(/\bxviii\b/g,'18').replace(/\bxvii\b/g,'17').replace(/\bxvi\b/g,'16')
+      .replace(/\bxv\b/g,'15')  .replace(/\bxiv\b/g,'14') .replace(/\bxiii\b/g,'13')
+      .replace(/\bxii\b/g,'12') .replace(/\bxi\b/g,'11')  .replace(/\bix\b/g,'9')
+      .replace(/\bviii\b/g,'8') .replace(/\bvii\b/g,'7')  .replace(/\bvi\b/g,'6')
+      .replace(/\biv\b/g,'4')   .replace(/\biii\b/g,'3')  .replace(/\bii\b/g,'2')
+      .replace(/\bv\b/g,'5');
+  }
+
+  // Strip symbols/accents/Unicode — base normalization
+  function normalizeName(name) {
+    return (name || '')
+      .replace(/[™®©℗]/g, '')
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+      .replace(/[\uFF1A\u02D0]/g, ':')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s\-'":]/g, ' ')
+      .toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  // Full canonical key used for grouping
+  function _groupKey(name, id) {
+    // CUSA ID map takes priority (manually curated groupings)
+    if (id) { const m = _CUSA_ID_MAP[(id+'').toUpperCase()]; if (m) return m.key; }
+    let s = normalizeName(name);
+    s = s.replace(/\s*[:\-]\s*/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
+    s = _applyRoman(s);
+    return _ALIAS_MAP[s]?.key ?? s;
+  }
+
+  // Best display name for a game (CUSA map wins, then alias table, then cleaned raw name)
+  function _displayName(name, id) {
+    if (id) { const m = _CUSA_ID_MAP[(id+'').toUpperCase()]; if (m) return m.display; }
+    let s = normalizeName(name);
+    s = s.replace(/\s*[:\-]\s*/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
+    s = _applyRoman(s);
+    return _ALIAS_MAP[s]?.display
+      ?? (name || '').replace(/[™®©℗]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function groupGames(games) {
+    const map = new Map();
+    for (const g of games) {
+      const key = _groupKey(g.name, g.id);
+      if (!map.has(key)) {
+        map.set(key, { name: _displayName(g.name, g.id), entries: [], coverUrl: null, coverId: null });
+      }
+      const grp = map.get(key);
+      grp.entries.push(g);
+      if (!grp.coverUrl) {
+        const cv = (g.id && CUSTOM_COVERS[g.id]) ? CUSTOM_COVERS[g.id] : (g.coverUrl || null);
+        if (cv) { grp.coverUrl = cv; grp.coverId = g.id; }
+      }
+    }
+    for (const grp of map.values()) grp.entries.sort((a,b) => parseVersion(b.version) - parseVersion(a.version));
+    return [...map.values()].sort((a,b) => a.name.localeCompare(b.name));
+  }
+
+  function getGroups() {
+    const q = document.getElementById('searchInput').value.trim();
+    let qKey = normalizeName(q);
+    qKey = qKey.replace(/\s*[:\-]\s*/g, ' ').replace(/['"]/g, ' ').replace(/\s+/g, ' ').trim();
+    qKey = _applyRoman(qKey);
+    let games = currentTab === 'favs' ? allGames.filter(g => favorites.has(g.id)) : allGames;
+    if (qKey) {
+      const tokens = qKey.split(/\s+/).filter(Boolean);
+      games = games.filter(g => {
+        const hay = _groupKey(g.name) + ' ' + (g.id || '').toLowerCase();
+        return tokens.every(t => hay.includes(t));
+      });
+    }
+    return groupGames(games);
+  }
+
+  // ─── RENDER GRID ───────────────────────────────────────
+  function renderResults() {
+    const groups = getGroups();
+    const totalCheatCount = groups.reduce((s, grp) => s + grp.entries.reduce((ss,e) => ss + (e.mods||[]).length, 0), 0);
+    const allGroups = groupGames(allGames);
+    const favGroups = groupGames(allGames.filter(g => favorites.has(g.id))).length;
+
+    document.getElementById('statPill').innerHTML =
+      `<b>${allGroups.length}</b> games &nbsp;·&nbsp; <b>${totalCheatCount}</b> cheats &nbsp;·&nbsp; ⭐ <b>${favGroups}</b>`;
+
+    const el = document.getElementById('results');
+    if (!groups.length) {
+      el.innerHTML = `<div class="no-results"><span class="emoji">${currentTab==='favs'?'⭐':'🎮'}</span><p>${currentTab==='favs'?'No favorites yet':'No games found'}</p></div>`;
+      return;
+    }
+
+    el.innerHTML = groups.slice(0, 300).map((grp, i) => {
+      const allIds = grp.entries.map(e => e.id||'').filter(Boolean);
+      const isFaved = allIds.some(id => favorites.has(id));
+      const totalMods = grp.entries.reduce((s,e) => s + (e.mods||[]).length, 0);
+      return `
+        <div class="game-tile" onclick="openDetail(${i})" style="animation-delay:${Math.min(i*0.02,0.4)}s">
+          <div class="tile-cover">
+            ${coverTileHtml(grp.coverId || allIds[0], grp.name, grp.coverUrl)}
+            <div class="tile-cheat-badge">${totalMods} cheats</div>
+            <button class="tile-fav" data-gidx="${i}" onclick="event.stopPropagation();toggleFavGroup(${i})" title="${isFaved?'Remove':'Add to'} favorites">${isFaved?'⭐':'☆'}</button>
+          </div>
+          <div class="tile-body">
+            <div class="tile-name">${escHtml(grp.name||'Unknown')}</div>
+            <div class="tile-meta">${grp.entries.length > 1 ? grp.entries.length+' versions' : (grp.entries[0]?.id||'')}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // store groups for later reference by index
+    window._groups = groups;
+  }
+
+  // ─── COVER HELPERS ─────────────────────────────────────
+  function gradientCover(id, name, size) {
+    const colors = [['#667eea','#764ba2'],['#f093fb','#f5576c'],['#4facfe','#00f2fe'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#30cfd0','#330867'],['#a8edea','#fed6e3'],['#ff9a56','#ff6a88'],['#ffecd2','#fcb69f'],['#ff6e7f','#bfe9ff']];
+    let hash = 0;
+    const s = id || name || '?';
+    for (let i=0;i<s.length;i++) hash = s.charCodeAt(i)+((hash<<5)-hash);
+    const [c1,c2] = colors[Math.abs(hash)%colors.length];
+    const letter = (name&&name[0])||(id&&id[0])||'?';
+    return `<div style="width:100%;height:100%;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-size:${size}px;font-weight:800;color:#fff;font-family:'Barlow Condensed',sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.3)">${escHtml(letter.toUpperCase())}</div>`;
+  }
+
+  function safeGrad(id, name, size) {
+    // Must be safe to embed inside onerror="this.outerHTML='...'"
+    // → escape " as &quot; (HTML-decoded back to " before JS runs) and ' as &#39;
+    return gradientCover(id, name, size).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function coverTileHtml(id, name, url) {
+    const imgUrl = (id && CUSTOM_COVERS[id]) || url || null;
+    if (imgUrl) return `<img src="${escHtml(imgUrl)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='${safeGrad(id,name,42)}'">`;
+    return gradientCover(id, name, 42);
+  }
+
+  function coverDetailHtml(id, name, url) {
+    const imgUrl = (id && CUSTOM_COVERS[id]) || url || null;
+    if (imgUrl) return `<img src="${escHtml(imgUrl)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='${safeGrad(id,name,60)}'">`;
+    return gradientCover(id, name, 60);
+  }
+
+  // ─── DETAIL PAGE ───────────────────────────────────────
+
+  // Build one collapsible version accordion block
+  function buildVersionBlock(idIdx, vi, e) {
+    const mods = e.mods || [];
+    const ver  = e.version != null ? String(e.version) : '?';
+    const cheatsHtml = mods.map(mod => `
+      <div class="cheat-row">
+        <div class="cheat-dot"></div>
+        <div class="cheat-name">${escHtml(mod.name||'')}</div>
+        <div class="cheat-type">${escHtml(mod.type||'')}</div>
+      </div>`).join('');
+    const creditsHtml = Array.isArray(e.credits) && e.credits.length
+      ? `<div class="vb-credits">by <span>${e.credits.map(c=>escHtml(String(c))).join(', ')}</span></div>` : '';
+    return `
+      <div class="version-block" id="vb-${idIdx}-${vi}">
+        <div class="version-block-header" onclick="toggleVersionBlock('vb-${idIdx}-${vi}')">
+          <span class="vbh-ver">v${escHtml(ver)}</span>
+          <span class="vbh-count">${mods.length} cheat${mods.length!==1?'s':''}</span>
+          <span class="vbh-chevron">▾</span>
+        </div>
+        <div class="version-block-cheats">${cheatsHtml}${creditsHtml}</div>
+      </div>`;
+  }
+
+  function toggleVersionBlock(blockId) {
+    const b = document.getElementById(blockId);
+    if (b) b.classList.toggle('open');
+  }
+
+  function openDetail(idx) {
+    const grp = window._groups[idx];
+    if (!grp) return;
+    currentGroup = grp;
+    const allIds = grp.entries.map(e => e.id||'').filter(Boolean);
+    const isFaved = allIds.some(id => favorites.has(id));
+    const totalMods = grp.entries.reduce((s,e) => s+(e.mods||[]).length,0);
+    const displayName = grp.name || 'Unknown Game';
+
+    document.getElementById('detailTitle').textContent = displayName;
+    document.getElementById('detailFavBtn').textContent = isFaved ? '⭐' : '☆';
+
+    // ── Group entries by CUSA ID, sort each group by version desc ──
+    const byId = new Map();
+    for (const e of grp.entries) {
+      const id = e.id || '?';
+      if (!byId.has(id)) byId.set(id, []);
+      byId.get(id).push(e);
+    }
+    for (const arr of byId.values())
+      arr.sort((a,b) => parseVersion(b.version) - parseVersion(a.version));
+
+    const ids = [...byId.keys()];
+
+    // ── CUSA ID selector tabs (always shown) ──────────────────────
+    const tabBtns = ids.map((id, i) => {
+      const entries = byId.get(id);
+      const cnt = entries.reduce((s,e) => s+(e.mods||[]).length, 0);
+      const verLabel = entries.length === 1
+        ? `v${entries[0].version||'?'}`
+        : `${entries.length} versions`;
+      return `<button class="vtab-btn${i===0?' active':''}" id="idtab-btn-${i}" onclick="switchIdTab(${i})">
+        <span class="vtab-id">${escHtml(id)}</span>
+        <span class="vtab-ver">${cnt} cheats · ${verLabel}</span>
+      </button>`;
+    }).join('');
+
+    const panels = ids.map((id, i) => {
+      const blocksHtml = byId.get(id).map((e, vi) => buildVersionBlock(i, vi, e)).join('');
+      return `<div class="vtab-panel${i===0?' active':''}" id="idtab-panel-${i}">${blocksHtml}</div>`;
+    }).join('');
+
+    const sectionLabel = ids.length > 1 ? 'Editions / Regions' : 'Versions';
+    const contentHtml = `
+      <div class="section-label">${sectionLabel}</div>
+      <div class="vtab-bar">${tabBtns}</div>
+      <div class="vtab-panels">${panels}</div>`;
+
+    const displayId = grp.coverId || allIds[0] || '';
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-hero">
+        <div class="detail-cover">${coverDetailHtml(displayId, grp.name, grp.coverUrl)}</div>
+        <div class="detail-info">
+          <div class="detail-game-name">${escHtml(displayName)}</div>
+          <div class="detail-tags">
+            <span class="dtag green">${totalMods} cheats total</span>
+            ${ids.length > 1 ? `<span class="dtag blue">${ids.length} IDs</span>` : ''}
+            ${grp.entries.length > 1 ? `<span class="dtag blue">${grp.entries.length} versions</span>` : ''}
+            ${allIds.slice(0,4).map(id=>`<span class="dtag blue">${escHtml(id)}</span>`).join('')}
+            ${allIds.length>4 ? `<span class="dtag">+${allIds.length-4} more</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${contentHtml}
+    `;
+
+    document.getElementById('detailPage').style.display = 'block';
+    document.getElementById('detailPage').scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    document.getElementById('detailPage').style.display = 'none';
+    document.body.style.overflow = '';
+    currentGroup = null;
+  }
+
+  // Switch between CUSA ID tabs
+  function switchIdTab(i) {
+    document.querySelectorAll('.vtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.vtab-panel').forEach(p => p.classList.remove('active'));
+    const btn   = document.getElementById('idtab-btn-'+i);
+    const panel = document.getElementById('idtab-panel-'+i);
+    if (btn)   btn.classList.add('active');
+    if (panel) panel.classList.add('active');
+  }
+
+  function toggleDetailFav() {
+    if (!currentGroup) return;
+    const ids = currentGroup.entries.map(e=>e.id||'').filter(Boolean);
+    const anyFaved = ids.some(id => favorites.has(id));
+    if (anyFaved) ids.forEach(id => favorites.delete(id));
+    else ids.forEach(id => favorites.add(id));
+    localStorage.setItem('ps4_favs', JSON.stringify([...favorites]));
+    const isFaved = ids.some(id => favorites.has(id));
+    document.getElementById('detailFavBtn').textContent = isFaved ? '⭐' : '☆';
+    renderResults();
+  }
+
+  // ─── FAVORITES ─────────────────────────────────────────
+  function toggleFavGroup(idx) {
+    const grp = window._groups[idx];
+    if (!grp) return;
+    const ids = grp.entries.map(e=>e.id||'').filter(Boolean);
+    const anyFaved = ids.some(id => favorites.has(id));
+    if (anyFaved) ids.forEach(id => favorites.delete(id));
+    else ids.forEach(id => favorites.add(id));
+    localStorage.setItem('ps4_favs', JSON.stringify([...favorites]));
+    renderResults();
+  }
+
+  // ─── COVER APIS ────────────────────────────────────────
+  async function fetchWikiCover(gameName) {
+    if (!gameName) return null;
+    try {
+      const clean = gameName.replace(/[®™©]/g,'').replace(/\s+/g,' ').trim();
+      const url = 'https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(clean+' video game')+'&gsrlimit=3&prop=pageimages&pithumbsize=600&format=json&origin=*';
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const pages = Object.values(data.query?.pages||{}).sort((a,b)=>(a.index??999)-(b.index??999));
+      const page = pages.find(p=>p.thumbnail?.source);
+      return page ? page.thumbnail.source : null;
+    } catch { return null; }
+  }
+
+  async function fetchRawgCover(gameName) {
+    if (!gameName) return null;
+    try {
+      const clean = gameName.replace(/[®™©]/g,'').replace(/\s*[:\-–]\s*(remastered|definitive edition|complete edition|gold edition|goty).*$/i,'').replace(/\s+/g,' ').trim();
+      const url = `${RAWG_BASE}/games?key=${RAWG_KEY}&search=${encodeURIComponent(clean)}&page_size=3&search_precise=true`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const json = await res.json();
+      const hit = (json.results||[]).find(g=>g.background_image);
+      return hit ? hit.background_image : null;
+    } catch { return null; }
+  }
+
+  // ─── SYNC FROM GITHUB ──────────────────────────────────
+  async function syncFromGitHub() {
+    const syncBtn    = document.getElementById('syncBtn');
+    const syncBtnBig = document.getElementById('syncBtnBig');
+    const wrap = document.getElementById('autoProgress');
+    const fill = document.getElementById('autoProgressFill');
+    const txt  = document.getElementById('autoProgressText');
+    wrap.style.display = 'block';
+    if (syncBtn)    { syncBtn.disabled = true; syncBtn.textContent = 'Syncing...'; }
+    if (syncBtnBig) { syncBtnBig.disabled = true; syncBtnBig.style.animation = 'none'; }
+
+    try {
+      // Step 1: load existing
+      let storedGames = [];
+      if (supabaseClient) {
+        const { data } = await supabaseClient.storage.from(STORAGE_BUCKET).download(STORAGE_FILE);
+        if (data) storedGames = JSON.parse(await data.text());
+      }
+      const storedMap = new Map(storedGames.map(g=>[g.id,g]));
+      const isFirstSync = storedGames.length === 0;
+
+      // Step 2: fetch file list
+      txt.textContent = 'Fetching file list...';
+      fill.style.width = '2%';
+      const listRes = await fetch(`${CDN}/json.txt`);
+      if (!listRes.ok) throw new Error(`Could not fetch file list (${listRes.status})`);
+      const files = (await listRes.text()).trim().split('\n').map(l=>{ const t=l.trim(),e=t.indexOf('=');return e>0?t.substring(0,e):t; }).filter(l=>l.endsWith('.json'));
+
+      // Step 3: fetch all game JSONs
+      const newGamesData = [];
+      const BATCH = 30;
+      let done = 0, successCount = 0, failCount = 0;
+      for (let i=0;i<files.length;i+=BATCH) {
+        await Promise.all(files.slice(i,i+BATCH).map(async fname=>{
+          try {
+            const r = await fetch(`${CDN}/json/${fname}`);
+            if (!r.ok){failCount++;return;}
+            const data = await r.json();
+            if (data&&typeof data.name==='string'&&Array.isArray(data.mods)){newGamesData.push(data);successCount++;} else failCount++;
+          } catch{failCount++;}
+          done++;
+          fill.style.width = Math.round(done/files.length*90)+'%';
+          txt.textContent = `Fetching... ${done}/${files.length} — ${successCount} games`;
+        }));
+      }
+      newGamesData.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+
+      // Step 4: carry over covers
+      const forceCovers = document.getElementById('forceCovers')?.checked;
+      let newCount=0, updatedCount=0;
+      for (const game of newGamesData) {
+        const old = storedMap.get(game.id);
+        if (!old) { newCount++; }
+        else {
+          if (old.coverUrl && !forceCovers) game.coverUrl = old.coverUrl;
+          if ((old.mods||[]).length !== (game.mods||[]).length) updatedCount++;
+        }
+      }
+
+      // Step 5: fetch missing covers
+      const needsCover = newGamesData.filter(g=>!g.coverUrl&&g.id&&g.id.startsWith('CUSA'));
+      if (needsCover.length>0) {
+        fill.style.width='91%'; txt.textContent=`🎨 Fetching covers for ${needsCover.length} games...`;
+        const nameMap=new Map(); let coverDone=0, wikiHits=0, rawgHits=0;
+        for (let i=0;i<needsCover.length;i+=10) {
+          await Promise.all(needsCover.slice(i,i+10).map(async game=>{
+            const key=(game.name||'').toLowerCase().trim();
+            let cv;
+            if (nameMap.has(key)){cv=nameMap.get(key);}
+            else { cv=await fetchWikiCover(game.name); if(cv)wikiHits++; else{cv=await fetchRawgCover(game.name);if(cv)rawgHits++;} nameMap.set(key,cv); }
+            if (cv) game.coverUrl=cv;
+            coverDone++;
+            fill.style.width=91+Math.round(coverDone/needsCover.length*4)+'%';
+            txt.textContent=`🎨 Covers ${coverDone}/${needsCover.length} — 📖${wikiHits} 🎮${rawgHits}`;
+          }));
+        }
+      }
+
+      allGames = newGamesData;
+
+      // Step 6: save
+      if (supabaseClient) {
+        fill.style.width='96%'; txt.textContent='Saving...';
+        const blob = new Blob([JSON.stringify(allGames)],{type:'application/json'});
+        await supabaseClient.storage.from(STORAGE_BUCKET).upload(STORAGE_FILE,blob,{upsert:true,contentType:'application/json'});
+      }
+
+      fill.style.width='100%';
+      txt.textContent = isFirstSync
+        ? `✅ ${allGames.length} games loaded`
+        : `✅ Sync done — ${newCount} new, ${updatedCount} updated (${allGames.length} total)`;
+
+      setTimeout(showMainLayout, 800);
+
+    } catch(err) {
+      console.error(err);
+      txt.textContent = '❌ ' + err.message;
+    } finally {
+      if (syncBtn)    { syncBtn.disabled=false; syncBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg> Sync'; }
+      if (syncBtnBig) { syncBtnBig.disabled=false; syncBtnBig.textContent='🔄 Re-Sync'; }
+    }
+  }
+
+  // ─── LOCAL FILES ───────────────────────────────────────
+  async function handleLocalFiles(files) {
+    const jsons = Array.from(files).filter(f=>f.name.endsWith('.json'));
+    if (!jsons.length) return;
+    allGames = [];
+    await Promise.all(jsons.map(file=>new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{ try{const d=JSON.parse(e.target.result);if(d&&typeof d.name==='string'&&Array.isArray(d.mods))allGames.push(d);}catch{} resolve(); };
+      reader.readAsText(file);
+    })));
+    allGames.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    showMainLayout();
+  }
+
+  // ─── UTILS ─────────────────────────────────────────────
+  function escHtml(s) {
+    if (s==null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

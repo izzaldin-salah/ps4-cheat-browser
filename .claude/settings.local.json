@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}
